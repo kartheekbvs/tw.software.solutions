@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TWSS - Technical Work for Software & Solutions. Premium technical education, courses, and certification services.">
+    <meta name="google-adsense-account" content="ca-pub-7076879859046410">
+    <title>TWSS | Technical Work for Software & Solutions</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="https://admin.speedexam.net/logo/dc3e4eab-a58d-4730-91c3-9ec209773c04.png">
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Custom Cursor -->
+<div id="cur-dot"></div>
+<div id="cur-ring"></div>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header class="header" id="header">
+    <div class="header-inner">
+        <a href="index.html" class="logo h-target">
+            <i class="fas fa-cube"></i> TWSS
+        </a>
+
+        <nav class="nav-menu">
+            <a href="index.html" class="h-target">Home</a>
+            <a href="courses.html" class="h-target">Courses</a>
+            <div class="dropdown">
+                <button class="dropbtn h-target">Services <i class="fas fa-chevron-down" style="font-size:0.55rem;margin-left:4px;"></i></button>
+                <div class="dropdown-content">
+                    <a href="courses.html">Courses</a>
+                    <a href="dashboard.html">Dashboard</a>
+                    <a href="about.html">About</a>
+                </div>
+            </div>
+            <a href="about.html" class="h-target">About</a>
+            <a href="contact.html" class="h-target">Contact</a>
+        </nav>
+
+        <div class="auth-buttons" id="authButtons">
+            <a href="#" class="auth-btn ghost h-target" onclick="openAuthModal('login')">Login</a>
+            <a href="#" class="auth-btn solid-btn h-target" onclick="openAuthModal('signup')">Sign Up</a>
+        </div>
+
+        <div class="profile-section" id="profileSection">
+            <div class="profile-btn h-target" onclick="toggleProfileMenu()">
+                <div class="profile-icon"><i class="fas fa-user"></i></div>
+                <span id="profileName">User</span>
+                <i class="fas fa-chevron-down" style="font-size:0.6rem;color:var(--mid);"></i>
+            </div>
+            <div class="profile-menu" id="profileMenu">
+                <div class="profile-menu-info">
+                    <div class="pname" id="profileFullName">User</div>
+                    <div class="pemail" id="profileEmail">user@twss.com</div>
+                </div>
+                <a href="dashboard.html" class="profile-menu-link"><i class="fas fa-th-large"></i> Dashboard</a>
+                <a href="courses.html" class="profile-menu-link"><i class="fas fa-book"></i> Courses</a>
+                <button class="logout-btn" onclick="logout()">Sign Out</button>
+            </div>
+        </div>
+
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</header>
+
+<!-- ═══════════════════════ HERO ═══════════════════════ -->
+<section class="hero" id="home">
+    <video class="hero-video" autoplay muted loop playsinline preload="auto">
+        <source src="https://twss.netlify.app/Video_Supports_Backside_Colors.mp4" type="video/mp4">
+    </video>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <p class="hero-eyebrow">Technical Work for Software & Solutions</p>
+        <h1>Build on <em>TWSS</em></h1>
+        <p>Compute power, database storage, content delivery, and beyond — TWSS delivers services that help you build sophisticated applications with flexibility, scalability and reliability.</p>
+        <div class="cta-row" id="ctaButtons">
+            <a href="courses.html" class="cta-btn white h-target">
+                <i class="fas fa-rocket"></i> Explore Courses
+            </a>
+            <a href="dashboard.html" class="cta-btn outline h-target">
+                <i class="fas fa-th-large"></i> Dashboard
+            </a>
+        </div>
+    </div>
+    <div class="hero-scroll-hint">
+        <div class="scroll-bar"></div>
+        <span>Scroll</span>
+    </div>
+</section>
+
+<!-- ═══════════════════════ ABOUT ═══════════════════════ -->
+<section class="about" id="about">
+    <div class="about-video-fallback"></div>
+    <video class="about-video-bg" autoplay muted loop playsinline preload="auto" id="aboutVideo">
+        <source src="https://twss-awe.pages.dev/4779866-hd_1920_1080_30fps.mp4" type="video/mp4">
+    </video>
+    <div class="about-overlay"></div>
+    <div class="about-inner">
+        <div class="reveal">
+            <p class="about-label">Who We Are</p>
+            <h2>Empowering the<br><em>next generation</em><br>of engineers</h2>
+            <div class="about-body">
+                <p>TWSS is dedicated to providing high-quality, accessible education and certification services in technology. Our platform offers a wide range of courses and training programs designed to equip you with skills needed to succeed in today's digital world.</p>
+                <p>We believe in a hands-on approach — providing practical experience through internships and comprehensive exam preparation. Our mission is to empower individuals and organizations with knowledge and certifications that matter.</p>
+            </div>
+        </div>
+        <div class="about-stats reveal" style="transition-delay:0.15s">
+            <div class="about-stat">
+                <div class="about-stat-num">4+</div>
+                <div class="about-stat-lbl">Technologies</div>
+            </div>
+            <div class="about-stat">
+                <div class="about-stat-num">50+</div>
+                <div class="about-stat-lbl">Modules</div>
+            </div>
+            <div class="about-stat">
+                <div class="about-stat-num">100%</div>
+                <div class="about-stat-lbl">Hands-on</div>
+            </div>
+            <div class="about-stat">
+                <div class="about-stat-num">&infin;</div>
+                <div class="about-stat-lbl">Learning</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ FEATURED COURSES ═══════════════════════ -->
+<section class="featured-courses" id="featured">
+    <div class="featured-inner">
+        <div class="section-header reveal">
+            <p class="section-kicker">Featured Programs</p>
+            <h2 class="section-title">Curriculum <em>Highlights</em></h2>
+            <p class="section-sub">Master world-class technologies with industry-leading modules. From programming fundamentals to advanced cloud architecture.</p>
+        </div>
+        <div class="courses-bento-grid">
+            <a href="courses.html" class="bento-card reveal">
+                <div class="bento-icon"><i class="fas fa-brain"></i></div>
+                <h3>AI & Machine Learning</h3>
+                <p>Advanced neural networks and practical artificial intelligence integration.</p>
+                <span class="bento-tag">Popular</span>
+            </a>
+            <a href="courses.html" class="bento-card reveal" style="transition-delay:0.08s">
+                <div class="bento-icon"><i class="fab fa-python"></i></div>
+                <h3>Python Engineering</h3>
+                <p>High-level programming from foundational logic to enterprise systems.</p>
+            </a>
+            <a href="courses.html" class="bento-card reveal" style="transition-delay:0.16s">
+                <div class="bento-icon"><i class="fab fa-microsoft"></i></div>
+                <h3>Microsoft Azure</h3>
+                <p>Master cloud architecture and global deployment strategies.</p>
+            </a>
+            <a href="courses.html" class="bento-card reveal" style="transition-delay:0.24s">
+                <div class="bento-icon"><i class="fas fa-sitemap"></i></div>
+                <h3>DSA Mastery</h3>
+                <p>Data Structures and Algorithms for high-performance software engineering.</p>
+                <span class="bento-tag">Essential</span>
+            </a>
+            <a href="courses.html" class="bento-card reveal" style="transition-delay:0.32s">
+                <div class="bento-icon"><i class="fas fa-database"></i></div>
+                <h3>Modern Databases</h3>
+                <p>Relational and NoSQL structures optimized for massive scale.</p>
+            </a>
+            <a href="courses.html" class="bento-card reveal" style="transition-delay:0.40s">
+                <div class="bento-icon"><i class="fas fa-cube"></i></div>
+                <h3>C++ Systems</h3>
+                <p>Object-oriented systems and low-level performance programming.</p>
+            </a>
+        </div>
+        <div class="cta-center reveal">
+            <a href="courses.html" class="cta-btn dark"><i class="fas fa-arrow-right"></i> View All Courses</a>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ PARTNERS ═══════════════════════ -->
+<section class="partners" id="partners">
+    <p class="partners-label">Our Trusted Partners</p>
+    <div style="overflow:hidden;">
+        <div class="marquee-track" id="marqueeTrack">
+            <div class="m-item"><h3>Google</h3></div>
+            <div class="m-item"><h3>Supabase</h3></div>
+            <div class="m-item"><h3>EmailJS</h3></div>
+            <div class="m-item"><h3>Netlify</h3></div>
+            <div class="m-item"><h3>Microsoft</h3></div>
+            <div class="m-item"><h3>Razorpay</h3></div>
+            <div class="m-item"><h3>Cloudflare</h3></div>
+            <div class="m-item"><h3>GitHub</h3></div>
+            <!-- Duplicate for seamless loop -->
+            <div class="m-item"><h3>Google</h3></div>
+            <div class="m-item"><h3>Supabase</h3></div>
+            <div class="m-item"><h3>EmailJS</h3></div>
+            <div class="m-item"><h3>Netlify</h3></div>
+            <div class="m-item"><h3>Microsoft</h3></div>
+            <div class="m-item"><h3>Razorpay</h3></div>
+            <div class="m-item"><h3>Cloudflare</h3></div>
+            <div class="m-item"><h3>GitHub</h3></div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ SERVICES ═══════════════════════ -->
+<section class="services" id="services">
+    <div class="services-inner">
+        <div class="section-header reveal">
+            <p class="section-kicker">What We Offer</p>
+            <h2 class="section-title">Our <em>Services</em></h2>
+            <p class="section-sub">Comprehensive solutions for all your technical education needs — from structured learning to certified examinations.</p>
+        </div>
+        <div class="services-grid">
+            <a href="courses.html" class="s-card reveal">
+                <div class="s-icon-wrap"><i class="fas fa-graduation-cap s-icon"></i></div>
+                <h3 class="s-title">Premium Courses</h3>
+                <p class="s-desc">Comprehensive learning resources with structured modules, hands-on projects, and industry-standard curriculum in AI, Python, Azure, and more.</p>
+                <span class="s-arrow">Explore <i class="fas fa-arrow-right"></i></span>
+            </a>
+            <a href="dashboard.html" class="s-card reveal" style="transition-delay:0.1s">
+                <div class="s-icon-wrap"><i class="fas fa-clipboard-check s-icon"></i></div>
+                <h3 class="s-title">Attend Exam</h3>
+                <p class="s-desc">Test your knowledge with professionally designed examinations and receive detailed performance feedback and certification.</p>
+                <span class="s-arrow">Explore <i class="fas fa-arrow-right"></i></span>
+            </a>
+            <a href="about.html" class="s-card reveal" style="transition-delay:0.2s">
+                <div class="s-icon-wrap"><i class="fas fa-chart-line s-icon"></i></div>
+                <h3 class="s-title">Dashboard</h3>
+                <p class="s-desc">Track your progress, access purchased content, and manage your learning journey from a centralized personal dashboard.</p>
+                <span class="s-arrow">Explore <i class="fas fa-arrow-right"></i></span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ PORTFOLIO SHOWCASE ═══════════════════════ -->
+<section class="showcase-section">
+    <div class="showcase-inner reveal">
+        <h2>Explore Our <em>Ecosystem</em></h2>
+        <p>Experience the full breadth of TWSS software solutions, our professional portfolio, and premium educational content.</p>
+        <div class="cta-row" style="justify-content:center;">
+            <a href="courses.html" class="cta-btn white"><i class="fas fa-book-open"></i> Browse Courses</a>
+            <a href="dashboard.html" class="cta-btn outline-light"><i class="fas fa-th-large"></i> Open Dashboard</a>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <div class="footer-logo"><i class="fas fa-cube" style="margin-right:10px;"></i>TWSS</div>
+                <p>Technical Work for Software & Solutions. Building technical excellence through practical, comprehensive education.</p>
+                <div class="footer-socials">
+                    <a href="https://x.com/bvs_kartheek" target="_blank"><i class="fab fa-twitter"></i></a>
+                    <a href="https://www.linkedin.com/in/kartheek-bvs-2a82562b9/" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="https://www.instagram.com/kartheek3693/" target="_blank"><i class="fab fa-instagram"></i></a>
+                    <a href="https://github.com/kartheekbvs" target="_blank"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h4>Services</h4>
+                <a href="courses.html">Courses</a>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="about.html">About Us</a>
+            </div>
+            <div class="footer-col">
+                <h4>Company</h4>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                <a href="https://github.com/kartheekbvs" target="_blank">GitHub</a>
+            </div>
+            <div class="footer-col">
+                <h4>Resources</h4>
+                <a href="courses.html">Documentation</a>
+                <a href="about.html">Careers</a>
+                <a href="contact.html">Support</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>&copy; 2026 TWSS Initiative. All Rights Reserved.</span>
+            <span>Technical Work for Software & Solutions</span>
+        </div>
+    </div>
+</footer>
+
+<!-- ═══════════════════════ AUTH MODAL ═══════════════════════ -->
+<div class="auth-modal" id="authModal">
+    <div class="auth-box">
+        <button class="auth-close" onclick="closeAuthModal()">&times;</button>
+        <h2 id="authTitle">Login</h2>
+        <div id="googleSignInButton"></div>
+        <div class="auth-divider"><span>or</span></div>
+        <input type="email" id="authEmail" placeholder="Email address">
+        <input type="password" id="authPassword" placeholder="Password" style="display:none;">
+        <input type="text" id="authName" placeholder="Full Name" style="display:none;">
+        <button type="button" class="submit-btn" id="authSubmitBtn" onclick="handleAuth()">Continue</button>
+        <div id="authStatus" class="auth-status" style="display:none;"></div>
+        <p id="authToggle">Don't have an account? <a href="#" onclick="toggleAuthMode()">Sign Up</a></p>
+    </div>
+</div>
+
+<!-- ═══════════════════════ MOBILE MENU ═══════════════════════ -->
+<div class="mobile-nav" id="mobileNav">
+    <div class="mobile-nav-header">
+        <span class="logo">TWSS</span>
+        <button class="mobile-close" onclick="toggleMobileMenu()">&times;</button>
+    </div>
+    <div class="mobile-nav-links">
+        <a href="index.html">Home</a>
+        <a href="courses.html">Courses</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+    </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

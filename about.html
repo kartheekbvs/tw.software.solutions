@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About | TWSS - Technical Work for Software & Solutions</title>
+    <meta name="description" content="Learn about TWSS - Technical Work for Software & Solutions. Our mission, vision, and the team behind your technical education.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="https://admin.speedexam.net/logo/dc3e4eab-a58d-4730-91c3-9ec209773c04.png">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/about.css">
+</head>
+<body>
+
+<!-- Custom Cursor -->
+<div id="cur-dot"></div>
+<div id="cur-ring"></div>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header class="header solid" id="header">
+    <div class="header-inner">
+        <a href="index.html" class="logo h-target">
+            <i class="fas fa-cube"></i> TWSS
+        </a>
+        <nav class="nav-menu">
+            <a href="index.html" class="h-target">Home</a>
+            <a href="courses.html" class="h-target">Courses</a>
+            <a href="dashboard.html" class="h-target">Dashboard</a>
+            <a href="about.html" class="h-target active">About</a>
+            <a href="contact.html" class="h-target">Contact</a>
+        </nav>
+        <div style="display:flex; gap:12px; align-items:center;">
+            <a href="courses.html" class="auth-btn solid-btn h-target">Get Started</a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- ═══════════════════════ ABOUT HERO ═══════════════════════ -->
+<section class="about-hero">
+    <div class="about-hero-overlay"></div>
+    <div class="about-hero-content">
+        <p class="hero-eyebrow">Our Story</p>
+        <h1>About <em>TWSS</em></h1>
+        <p>Technical Work for Software & Solutions — building the next generation of engineers through accessible, practical, and comprehensive education.</p>
+    </div>
+</section>
+
+<!-- ═══════════════════════ MISSION ═══════════════════════ -->
+<section class="about-mission">
+    <div class="mission-inner">
+        <div class="mission-text reveal">
+            <p class="section-kicker">Our Mission</p>
+            <h2 class="section-title">Empowering the <em>next generation</em></h2>
+            <p>TWSS is dedicated to providing high-quality, accessible education and certification services in technology. Our platform offers a wide range of courses and training programs designed to equip you with skills needed to succeed in today's digital world.</p>
+            <p>We believe in a hands-on approach — providing practical experience through internships and comprehensive exam preparation. Our mission is to empower individuals and organizations with knowledge and certifications that matter.</p>
+        </div>
+        <div class="mission-stats reveal" style="transition-delay:0.15s">
+            <div class="stat-card">
+                <div class="stat-num">4+</div>
+                <div class="stat-lbl">Technologies</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num">50+</div>
+                <div class="stat-lbl">Modules</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num">100%</div>
+                <div class="stat-lbl">Hands-on</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num">&infin;</div>
+                <div class="stat-lbl">Learning</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ VALUES ═══════════════════════ -->
+<section class="about-values">
+    <div class="values-inner">
+        <div class="section-header reveal">
+            <p class="section-kicker">What Drives Us</p>
+            <h2 class="section-title">Our <em>Values</em></h2>
+        </div>
+        <div class="values-grid">
+            <div class="value-card reveal">
+                <div class="value-icon"><i class="fas fa-lightbulb"></i></div>
+                <h3>Innovation</h3>
+                <p>We continuously evolve our curriculum to stay ahead of industry trends, ensuring our learners are always prepared for what comes next in technology.</p>
+            </div>
+            <div class="value-card reveal" style="transition-delay:0.1s">
+                <div class="value-icon"><i class="fas fa-hands-helping"></i></div>
+                <h3>Accessibility</h3>
+                <p>Quality education should be available to everyone. We design our courses to be affordable, approachable, and available across devices and platforms.</p>
+            </div>
+            <div class="value-card reveal" style="transition-delay:0.2s">
+                <div class="value-icon"><i class="fas fa-tools"></i></div>
+                <h3>Practicality</h3>
+                <p>Theory without practice is incomplete. Every course emphasizes hands-on projects, real-world applications, and skills that translate directly to the workplace.</p>
+            </div>
+            <div class="value-card reveal" style="transition-delay:0.3s">
+                <div class="value-icon"><i class="fas fa-certificate"></i></div>
+                <h3>Certification</h3>
+                <p>Our certifications carry weight in the industry. They validate real skills and demonstrate competency to employers and peers alike.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ CTA ═══════════════════════ -->
+<section class="about-cta">
+    <div class="cta-inner reveal">
+        <h2>Ready to Start Your Journey?</h2>
+        <p>Join thousands of learners building their future with TWSS.</p>
+        <div class="cta-row" style="justify-content:center; margin-top:30px;">
+            <a href="courses.html" class="cta-btn white"><i class="fas fa-rocket"></i> Explore Courses</a>
+            <a href="contact.html" class="cta-btn outline-light"><i class="fas fa-envelope"></i> Contact Us</a>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <div class="footer-logo"><i class="fas fa-cube" style="margin-right:10px;"></i>TWSS</div>
+                <p>Technical Work for Software & Solutions. Building technical excellence through practical, comprehensive education.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Services</h4>
+                <a href="courses.html">Courses</a>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="about.html">About Us</a>
+            </div>
+            <div class="footer-col">
+                <h4>Company</h4>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                <a href="https://github.com/kartheekbvs" target="_blank">GitHub</a>
+            </div>
+            <div class="footer-col">
+                <h4>Resources</h4>
+                <a href="courses.html">Documentation</a>
+                <a href="about.html">Careers</a>
+                <a href="contact.html">Support</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>&copy; 2026 TWSS Initiative. All Rights Reserved.</span>
+            <span>Technical Work for Software & Solutions</span>
+        </div>
+    </div>
+</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>

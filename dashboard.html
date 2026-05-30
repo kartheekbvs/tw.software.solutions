@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | TWSS</title>
+    <meta name="description" content="Access your purchased courses and track your learning progress on the TWSS Dashboard.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="https://admin.speedexam.net/logo/dc3e4eab-a58d-4730-91c3-9ec209773c04.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+<!-- Custom Cursor -->
+<div id="cur-dot"></div>
+<div id="cur-ring"></div>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header class="header solid" id="header">
+    <div class="header-inner">
+        <a href="index.html" class="logo h-target">
+            <i class="fas fa-cube"></i> TWSS
+        </a>
+        <nav class="nav-menu">
+            <a href="index.html" class="h-target">Home</a>
+            <a href="courses.html" class="h-target">Courses</a>
+            <a href="dashboard.html" class="h-target active">Dashboard</a>
+            <a href="about.html" class="h-target">About</a>
+            <a href="contact.html" class="h-target">Contact</a>
+        </nav>
+        <div style="display:flex; gap:12px; align-items:center;">
+            <a href="courses.html" class="auth-btn ghost h-target"><i class="fas fa-book"></i> Buy Courses</a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- ═══════════════════════ DASHBOARD ═══════════════════════ -->
+<main class="dashboard-main">
+    <!-- Auth Section -->
+    <div id="auth-section" class="dashboard-auth">
+        <div class="auth-card">
+            <div class="auth-icon"><i class="fas fa-lock"></i></div>
+            <h2>Access Your Content</h2>
+            <p>Enter the email used during purchase to access your library</p>
+            <input type="email" id="email-input" placeholder="name@example.com">
+            <button class="dash-btn" onclick="fetchPurchases()"><i class="fas fa-search"></i> Check Purchases</button>
+            <div id="status-msg" class="status-msg"></div>
+        </div>
+    </div>
+
+    <!-- Content Section -->
+    <div id="content-section" style="display:none;">
+        <div class="dashboard-header">
+            <div>
+                <h2>Your Library</h2>
+                <p style="color:var(--mid); margin-top:4px;">Access all your purchased content</p>
+            </div>
+            <button class="dash-btn outline" onclick="location.reload()"><i class="fas fa-sign-out-alt"></i> Exit</button>
+        </div>
+        <div id="courses-list" class="library-grid"></div>
+    </div>
+</main>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-bottom" style="border:none; padding-top:0;">
+            <span>&copy; 2026 TWSS Initiative. All Rights Reserved.</span>
+            <span>Technical Work for Software & Solutions</span>
+        </div>
+    </div>
+</footer>
+
+<script src="js/app.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

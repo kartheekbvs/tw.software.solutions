@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Courses | TWSS - Premium Technical Education</title>
+    <meta name="description" content="Browse premium technical courses from TWSS. Learn Python, SQL, DSA, C++, Java and more with hands-on projects.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="https://admin.speedexam.net/logo/dc3e4eab-a58d-4730-91c3-9ec209773c04.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/courses.css">
+</head>
+<body>
+
+<!-- Custom Cursor -->
+<div id="cur-dot"></div>
+<div id="cur-ring"></div>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header class="header solid" id="header">
+    <div class="header-inner">
+        <a href="index.html" class="logo h-target">
+            <i class="fas fa-cube"></i> TWSS
+        </a>
+        <nav class="nav-menu">
+            <a href="index.html" class="h-target">Home</a>
+            <a href="courses.html" class="h-target active">Courses</a>
+            <div class="dropdown">
+                <button class="dropbtn h-target">Services <i class="fas fa-chevron-down" style="font-size:0.55rem;margin-left:4px;"></i></button>
+                <div class="dropdown-content">
+                    <a href="courses.html">Courses</a>
+                    <a href="dashboard.html">Dashboard</a>
+                    <a href="about.html">About</a>
+                </div>
+            </div>
+            <a href="about.html" class="h-target">About</a>
+            <a href="contact.html" class="h-target">Contact</a>
+        </nav>
+
+        <div style="display:flex; gap:12px; align-items:center;">
+            <a href="dashboard.html" class="auth-btn ghost h-target"><i class="fas fa-th-large"></i> Dashboard</a>
+            <div class="cart-btn" id="cart-icon-btn">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count" id="cart-count">0</span>
+            </div>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- ═══════════════════════ COURSES HERO ═══════════════════════ -->
+<section class="courses-hero">
+    <div class="courses-hero-bg"></div>
+    <div class="courses-hero-content">
+        <p class="hero-eyebrow">Premium Learning</p>
+        <h1>Master Data &<br><em>Development</em></h1>
+        <p>Premium resources for Python, SQL, Full Stack, and beyond. Start your journey to technical excellence.</p>
+    </div>
+    <div class="database-anim">
+        <div class="disk"></div>
+        <div class="disk"></div>
+        <div class="disk"></div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ COURSES GRID ═══════════════════════ -->
+<section class="courses-section" id="courses">
+    <div class="courses-inner">
+        <div class="section-header reveal">
+            <p class="section-kicker">Course Catalog</p>
+            <h2 class="section-title">Premium <em>Courses</em></h2>
+            <p class="section-sub">Invest in your future with our industry-leading curriculum. Each course includes hands-on projects, real-world applications, and lifetime access.</p>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="course-filters reveal">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="notes">Notes</button>
+            <button class="filter-btn" data-filter="plan">Plans</button>
+        </div>
+
+        <div class="courses-premium-grid">
+            <!-- Notes -->
+            <div class="premium-card reveal" data-category="notes" data-product-id="c_notes">
+                <div class="card-badge">Notes</div>
+                <div class="card-icon-wrap"><i class="fas fa-code"></i></div>
+                <h3 class="card-title">C Language Notes</h3>
+                <p class="card-desc">Comprehensive C programming notes covering fundamentals to advanced concepts with practical examples.</p>
+                <div class="card-footer">
+                    <div class="card-price">&#8377;9</div>
+                    <button class="add-to-cart-btn" onclick="addToCart(this)">Add to Cart</button>
+                </div>
+            </div>
+
+            <div class="premium-card reveal" data-category="notes" data-product-id="cpp_notes" style="transition-delay:0.06s">
+                <div class="card-badge">Notes</div>
+                <div class="card-icon-wrap"><i class="fas fa-cube"></i></div>
+                <h3 class="card-title">C++ Language Notes</h3>
+                <p class="card-desc">Object-oriented programming in C++ with modern practices, STL, and systems-level programming patterns.</p>
+                <div class="card-footer">
+                    <div class="card-price">&#8377;9</div>
+                    <button class="add-to-cart-btn" onclick="addToCart(this)">Add to Cart</button>
+                </div>
+            </div>
+
+            <div class="premium-card reveal" data-category="notes" data-product-id="java_notes" style="transition-delay:0.12s">
+                <div class="card-badge">Notes</div>
+                <div class="card-icon-wrap"><i class="fab fa-java"></i></div>
+                <h3 class="card-title">JAVA Language Notes</h3>
+                <p class="card-desc">Enterprise-grade Java development from core fundamentals to advanced frameworks and design patterns.</p>
+                <div class="card-footer">
+                    <div class="card-price">&#8377;9</div>
+                    <button class="add-to-cart-btn" onclick="addToCart(this)">Add to Cart</button>
+                </div>
+            </div>
+
+            <div class="premium-card reveal" data-category="notes" data-product-id="python_notes" style="transition-delay:0.18s">
+                <div class="card-badge">Notes</div>
+                <div class="card-icon-wrap"><i class="fab fa-python"></i></div>
+                <h3 class="card-title">Python Language Notes</h3>
+                <p class="card-desc">Python mastery from foundational logic to enterprise systems, data science, and automation.</p>
+                <div class="card-footer">
+                    <div class="card-price">&#8377;9</div>
+                    <button class="add-to-cart-btn" onclick="addToCart(this)">Add to Cart</button>
+                </div>
+            </div>
+
+            <div class="premium-card reveal" data-category="notes" data-product-id="sql_notes" style="transition-delay:0.24s">
+                <div class="card-badge">Notes</div>
+                <div class="card-icon-wrap"><i class="fas fa-database"></i></div>
+                <h3 class="card-title">SQL Language Notes</h3>
+                <p class="card-desc">Database querying and management with SQL — from basic SELECT statements to complex joins and optimization.</p>
+                <div class="card-footer">
+                    <div class="card-price">&#8377;9</div>
+                    <button class="add-to-cart-btn" onclick="addToCart(this)">Add to Cart</button>
+                </div>
+            </div>
+
+            <!-- Plans -->
+            <div class="premium-card featured reveal" data-category="plan" data-product-id="website_plan" style="transition-delay:0.30s">
+                <div class="card-badge featured-badge">Popular</div>
+                <div class="card-icon-wrap"><i class="fas fa-globe"></i></div>
+                <h3 class="card-title">Website & Domain Plan</h3>
+                <p class="card-desc">Get your own website and domain with professional hosting, SSL, and deployment support included.</p>
+                <div class="card-footer">
+                    <div class="card-price">&#8377;79</div>
+                    <button class="add-to-cart-btn" onclick="addToCart(this)">Add to Cart</button>
+                </div>
+            </div>
+
+            <div class="premium-card featured reveal" data-category="plan" data-product-id="dsa_fullstack" style="transition-delay:0.36s">
+                <div class="card-badge featured-badge">Best Value</div>
+                <div class="card-icon-wrap"><i class="fas fa-layer-group"></i></div>
+                <h3 class="card-title">DSA + Full-Stack Plan</h3>
+                <p class="card-desc">Complete package combining Data Structures & Algorithms with full-stack web development training.</p>
+                <div class="card-footer">
+                    <div class="card-price">&#8377;149</div>
+                    <button class="add-to-cart-btn" onclick="addToCart(this)">Add to Cart</button>
+                </div>
+            </div>
+
+            <div class="premium-card featured reveal" data-category="plan" data-product-id="dsa_analytics" style="transition-delay:0.42s">
+                <div class="card-badge featured-badge">Premium</div>
+                <div class="card-icon-wrap"><i class="fas fa-chart-bar"></i></div>
+                <h3 class="card-title">DSA + Data Analytics Plan</h3>
+                <p class="card-desc">Premium Python and SQL learning platforms with embedded compilers and real-time analytics projects.</p>
+                <div class="card-footer">
+                    <div class="card-price">&#8377;159</div>
+                    <button class="add-to-cart-btn" onclick="addToCart(this)">Add to Cart</button>
+                </div>
+            </div>
+
+            <div class="premium-card featured reveal" data-category="plan" data-product-id="college_plan" style="transition-delay:0.48s">
+                <div class="card-badge featured-badge">Complete</div>
+                <div class="card-icon-wrap"><i class="fas fa-graduation-cap"></i></div>
+                <h3 class="card-title">4 Years College Plan</h3>
+                <p class="card-desc">All-inclusive access to every course, note, and resource for your entire college journey. Ultimate value.</p>
+                <div class="card-footer">
+                    <div class="card-price">&#8377;249</div>
+                    <button class="add-to-cart-btn" onclick="addToCart(this)">Add to Cart</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ CART MODAL ═══════════════════════ -->
+<div id="cartModal" class="modal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('cartModal')">&times;</button>
+        <h2>Your Cart</h2>
+        <ul id="cart-items" class="cart-list"></ul>
+        <div id="cart-total" class="cart-total"></div>
+
+        <div style="display:flex; gap:10px; margin-top:12px;">
+            <input type="text" id="coupon-input" placeholder="Coupon Code" style="text-transform:uppercase; flex:1;">
+            <button class="coupon-btn" onclick="applyCoupon()">Apply</button>
+        </div>
+        <div id="coupon-msg" style="margin-top:5px; font-size:0.85rem; min-height:20px;"></div>
+
+        <form id="checkout-form" style="display:none; margin-top:20px;">
+            <h3 style="margin-bottom:16px;">Checkout Details</h3>
+            <input type="text" id="checkout-name" placeholder="Your Name" required>
+            <input type="email" id="checkout-email" placeholder="Your Email" required>
+            <button type="submit" class="pay-btn"><i class="fas fa-lock"></i> Pay Now</button>
+        </form>
+
+        <button class="checkout-btn" id="proceed-to-checkout" onclick="showCheckoutForm()">Proceed to Checkout</button>
+    </div>
+</div>
+
+<!-- ═══════════════════════ AUTH MODAL ═══════════════════════ -->
+<div id="authModal" class="modal">
+    <div class="modal-box" style="text-align:center;">
+        <button class="modal-close" onclick="closeModal('authModal')">&times;</button>
+        <h2>Login Required</h2>
+        <p style="color:var(--mid); margin-bottom:20px;">Please enter your email to continue</p>
+        <input type="email" id="login-email" placeholder="Enter Email" style="width:100%;">
+        <button class="pay-btn" onclick="mockLogin()">Continue</button>
+    </div>
+</div>
+
+<!-- ═══════════════════════ SUCCESS MODAL ═══════════════════════ -->
+<div id="purchaseSuccessModal" class="modal">
+    <div class="modal-box" style="text-align:center;">
+        <button class="modal-close" onclick="closeModal('purchaseSuccessModal')">&times;</button>
+        <div style="font-size:3rem; margin-bottom:20px; color:var(--paper);"><i class="fas fa-check-circle"></i></div>
+        <h2>Purchase Successful!</h2>
+        <p id="success-message" style="color:var(--mid); margin:20px 0;">Your courses have been added to your account.</p>
+        <a href="dashboard.html" class="pay-btn" style="display:inline-block; text-decoration:none; text-align:center;">
+            <i class="fas fa-columns"></i> Go to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- ═══════════════════════ MESSAGE MODAL ═══════════════════════ -->
+<div id="messageModal" class="modal">
+    <div class="modal-box" style="text-align:center;">
+        <button class="modal-close" onclick="closeModal('messageModal')">&times;</button>
+        <div id="modal-icon" style="font-size:3rem; margin-bottom:20px;"></div>
+        <p id="modal-message"></p>
+    </div>
+</div>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-top">
+            <div class="footer-brand">
+                <div class="footer-logo"><i class="fas fa-cube" style="margin-right:10px;"></i>TWSS</div>
+                <p>Technical Work for Software & Solutions. Building technical excellence through practical, comprehensive education.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Services</h4>
+                <a href="courses.html">Courses</a>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="about.html">About Us</a>
+            </div>
+            <div class="footer-col">
+                <h4>Company</h4>
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact</a>
+                <a href="https://github.com/kartheekbvs" target="_blank">GitHub</a>
+            </div>
+            <div class="footer-col">
+                <h4>Resources</h4>
+                <a href="courses.html">Documentation</a>
+                <a href="about.html">Careers</a>
+                <a href="contact.html">Support</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>&copy; 2026 TWSS Initiative. All Rights Reserved.</span>
+            <span>Technical Work for Software & Solutions</span>
+        </div>
+    </div>
+</footer>
+
+<script src="js/app.js"></script>
+<script src="js/courses.js"></script>
+</body>
+</html>

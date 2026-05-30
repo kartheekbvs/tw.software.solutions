@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact | TWSS - Get in Touch</title>
+    <meta name="description" content="Get in touch with TWSS. Let us help you with your technical education needs.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="https://admin.speedexam.net/logo/dc3e4eab-a58d-4730-91c3-9ec209773c04.png">
+
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/contact.css">
+</head>
+<body>
+
+<!-- Custom Cursor -->
+<div id="cur-dot"></div>
+<div id="cur-ring"></div>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header class="header solid" id="header">
+    <div class="header-inner">
+        <a href="index.html" class="logo h-target">
+            <i class="fas fa-cube"></i> TWSS
+        </a>
+        <nav class="nav-menu">
+            <a href="index.html" class="h-target">Home</a>
+            <a href="courses.html" class="h-target">Courses</a>
+            <a href="dashboard.html" class="h-target">Dashboard</a>
+            <a href="about.html" class="h-target">About</a>
+            <a href="contact.html" class="h-target active">Contact</a>
+        </nav>
+        <div style="display:flex; gap:12px; align-items:center;">
+            <a href="courses.html" class="auth-btn solid-btn h-target">Get Started</a>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- ═══════════════════════ CONTACT ═══════════════════════ -->
+<section class="contact-section">
+    <div class="contact-inner">
+        <div class="contact-info reveal">
+            <p class="section-kicker">Get in Touch</p>
+            <h2 class="section-title">Let's Discuss Your <em>Growth</em></h2>
+            <p style="color:var(--mid); line-height:1.8; margin-bottom:30px;">Whether you have questions about our courses, need technical support, or want to explore partnership opportunities, we're here to help you succeed.</p>
+
+            <div class="contact-details">
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <div>
+                        <h4>Email</h4>
+                        <p>support@twss.dev</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>
+                        <h4>Location</h4>
+                        <p>India</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <h4>Response Time</h4>
+                        <p>Within 24 hours</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="contact-socials">
+                <a href="https://x.com/bvs_kartheek" target="_blank"><i class="fab fa-twitter"></i></a>
+                <a href="https://www.linkedin.com/in/kartheek-bvs-2a82562b9/" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+                <a href="https://www.instagram.com/kartheek3693/" target="_blank"><i class="fab fa-instagram"></i></a>
+                <a href="https://github.com/kartheekbvs" target="_blank"><i class="fab fa-github"></i></a>
+            </div>
+        </div>
+
+        <div class="contact-form-wrap reveal" style="transition-delay:0.15s">
+            <form id="contact-form">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="from_name" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="from_email" placeholder="john@company.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" name="subject" placeholder="Course Inquiry">
+                </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea name="message" rows="5" placeholder="How can we help?" required></textarea>
+                </div>
+                <button type="submit" class="submit-btn" id="submit-btn"><i class="fas fa-paper-plane"></i> Send Message</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-bottom" style="border:none; padding-top:0;">
+            <span>&copy; 2026 TWSS Initiative. All Rights Reserved.</span>
+            <span>Technical Work for Software & Solutions</span>
+        </div>
+    </div>
+</footer>
+
+<script src="js/app.js"></script>
+<script>
+    // EmailJS Init
+    (function() { emailjs.init("3BMbctG8PLkgdT2XV"); })();
+
+    // Contact Form
+    const form = document.getElementById('contact-form');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submit-btn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+        emailjs.sendForm('service_ood6pkb', 'template_ri7qwvd', this)
+            .then(() => {
+                btn.innerHTML = '<i class="fas fa-check"></i> Sent!';
+                form.reset();
+                setTimeout(() => { btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Message'; }, 3000);
+            }, (err) => {
+                btn.innerHTML = '<i class="fas fa-times"></i> Error';
+                setTimeout(() => { btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Message'; }, 3000);
+            });
+    });
+</script>
+</body>
+</html>
