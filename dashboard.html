@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | TWSS</title>
     <meta name="description" content="Access your purchased courses and track your learning progress on the TWSS Dashboard.">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,8 +55,8 @@
         <div class="auth-card">
             <div class="auth-icon"><i class="fas fa-lock"></i></div>
             <h2>Access Your Content</h2>
-            <p>Enter the email used during purchase to access your library</p>
-            <input type="email" id="email-input" placeholder="name@example.com">
+            <p>Enter the email used during purchase to access your library. Your purchases are synced in real-time.</p>
+            <input type="email" id="email-input" placeholder="name@example.com" autocomplete="email">
             <button class="dash-btn" onclick="fetchPurchases()"><i class="fas fa-search"></i> Check Purchases</button>
             <div id="status-msg" class="status-msg"></div>
         </div>
@@ -64,11 +67,32 @@
         <div class="dashboard-header">
             <div>
                 <h2>Your Library</h2>
-                <p style="color:var(--mid); margin-top:4px;">Access all your purchased content</p>
+                <p class="user-email" id="dash-user-email"></p>
             </div>
-            <button class="dash-btn outline" onclick="location.reload()"><i class="fas fa-sign-out-alt"></i> Exit</button>
+            <button class="dash-btn outline" onclick="logoutDashboard()"><i class="fas fa-sign-out-alt"></i> Exit</button>
         </div>
+
+        <!-- Dashboard Stats -->
+        <div class="dashboard-stats" id="dashboard-stats"></div>
+
+        <!-- Real-time indicator -->
+        <div class="realtime-indicator">
+            <div class="realtime-dot"></div>
+            <span>Live Sync Active</span>
+        </div>
+
+        <!-- Course List -->
         <div id="courses-list" class="library-grid"></div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="empty-state" style="display:none;">
+            <div class="empty-icon"><i class="fas fa-book-open"></i></div>
+            <div class="empty-title">No courses yet</div>
+            <p class="empty-desc">You haven't purchased any courses yet. Browse our catalog to get started.</p>
+            <a href="courses.html" class="dash-btn" style="width:auto; display:inline-flex; padding:16px 36px;">
+                <i class="fas fa-arrow-right"></i> Browse Courses
+            </a>
+        </div>
     </div>
 </main>
 
