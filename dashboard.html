@@ -34,7 +34,7 @@
 
     <!-- Auth Section -->
     <div id="auth-section" class="login-box">
-        <h2><i class="fas fa-lock" style="margin-right:10px;color:#888;"></i>Access Your Content</h2>
+        <h2>Access Your Content</h2>
         <p style="color: #666; margin-bottom: 20px;">Enter the email used during purchase</p>
         <input type="email" id="email-input" placeholder="name@example.com">
         <button class="dash-btn-primary" onclick="fetchPurchases()">
@@ -119,17 +119,30 @@ function isValidEmail(email) {
 // Supabase Init
 const supabaseUrl = 'https://fzwvxesrtdilljgrntpw.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d3Z4ZXNydGRpbGxqZ3JudHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NzU2NzMsImV4cCI6MjA2NjQ1MTY3M30.YnxjUtFawuumihyVGuk8e-o6iE9OkDf-MX1aKRTqA5U';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+let db = null;
+try {
+    if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+        db = window.supabase.createClient(supabaseUrl, supabaseKey);
+    }
+} catch (e) {
+    console.error('Supabase init error:', e);
+}
 
 // Config
 const GOOGLE_CLIENT_ID = "930575952017-crls3493s43tld7rmsr0unf1il7qi627.apps.googleusercontent.com";
 
-// Course Name to Link Mapping
+// Course Name to Link Mapping (includes both short and long names from database)
 const courseLinks = {
+    "C": { link: "https://coursestwss.pages.dev/course/tab001", icon: "fas fa-code", type: "Notes" },
     "C Language Notes": { link: "https://coursestwss.pages.dev/course/tab001", icon: "fas fa-code", type: "Notes" },
+    "C++": { link: "https://coursestwss.pages.dev/course/tab002", icon: "fas fa-cube", type: "Notes" },
     "C++ Language Notes": { link: "https://coursestwss.pages.dev/course/tab002", icon: "fas fa-cube", type: "Notes" },
+    "JAVA": { link: "https://coursestwss.pages.dev/course/tab003", icon: "fab fa-java", type: "Notes" },
     "JAVA Language Notes": { link: "https://coursestwss.pages.dev/course/tab003", icon: "fab fa-java", type: "Notes" },
+    "Python": { link: "https://coursestwss.pages.dev/course/tab004", icon: "fab fa-python", type: "Notes" },
     "Python Language Notes": { link: "https://coursestwss.pages.dev/course/tab004", icon: "fab fa-python", type: "Notes" },
+    "SQL": { link: "https://coursestwss.pages.dev/course/tab005", icon: "fas fa-database", type: "Notes" },
     "SQL Language Notes": { link: "https://coursestwss.pages.dev/course/tab005", icon: "fas fa-database", type: "Notes" },
     "Website & Domain Plan": { link: "https://coursestwss.pages.dev/course/pre001", icon: "fas fa-globe", type: "Plan" },
     "DSA + Full-Stack Plan": { link: "https://coursestwss.pages.dev/course/pre002", icon: "fas fa-layer-group", type: "Plan" },
@@ -158,17 +171,26 @@ async function fetchPurchases() {
         return;
     }
 
+    if (!db) {
+        statusMsg.style.color = 'red';
+        statusMsg.innerText = "Database not connected. Please refresh the page.";
+        return;
+    }
+
     statusMsg.style.color = '#fff';
     statusMsg.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching database...';
 
     try {
         // Fetch from 'purchase' table
-        const { data, error } = await supabase
+        const { data, error } = await db
             .from('purchase')
             .select('purchased_content')
             .eq('email', email);
 
-        if (error) throw error;
+        if (error) {
+            console.error('Supabase query error:', error);
+            throw error;
+        }
 
         if (!data || data.length === 0) {
             statusMsg.style.color = '#ccc';
@@ -180,6 +202,10 @@ async function fetchPurchases() {
         currentUserEmail = email;
         localStorage.setItem("userEmail", email);
         localStorage.setItem("loggedIn", "true");
+        localStorage.setItem("twss_user", JSON.stringify({
+            email: email,
+            name: email.split('@')[0]
+        }));
 
         document.getElementById('auth-section').style.display = 'none';
         document.getElementById('content-section').style.display = 'block';
@@ -196,6 +222,7 @@ async function fetchPurchases() {
         // Render stats
         renderStats(uniqueCourses);
 
+        // Render course cards
         uniqueCourses.forEach(courseName => {
             const courseInfo = courseLinks[courseName];
             const link = courseInfo ? courseInfo.link : null;
@@ -218,16 +245,16 @@ async function fetchPurchases() {
                     <div class="course-card">
                         <div class="course-card-icon"><i class="${icon}"></i></div>
                         <div class="course-title">${escapeHTML(courseName)}</div>
-                        <p class="course-status" style="color:#666;">Contact support for access link.</p>
+                        <p class="course-status" style="color:#666;"><i class="fas fa-info-circle"></i> Contact support for access link.</p>
                     </div>
                 `;
             }
         });
 
     } catch (err) {
-        console.error(err);
+        console.error('fetchPurchases error:', err);
         statusMsg.style.color = 'red';
-        statusMsg.innerText = "Error connecting to database.";
+        statusMsg.innerText = "Error connecting to database: " + (err.message || "Unknown error");
     }
 }
 
@@ -261,7 +288,7 @@ function renderStats(uniqueCourses) {
 async function loginWithGoogle() {
     const statusMsg = document.getElementById('status-msg');
 
-    if (window.google && window.google.accounts) {
+    if (window.google && window.google.accounts && window.google.accounts.id) {
         try {
             google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
@@ -275,14 +302,14 @@ async function loginWithGoogle() {
                         const { email: gEmail, name, picture, sub: gid } = JSON.parse(jsonPayload);
 
                         // Find or create user in users_login
-                        const { data: existing } = await supabase.from('users_login').select('*').eq('email', gEmail).maybeSingle();
+                        const { data: existing } = await db.from('users_login').select('*').eq('email', gEmail).maybeSingle();
                         if (existing) {
-                            await supabase.from('users_login').update({ google_id: gid, name, picture }).eq('id', existing.id);
+                            await db.from('users_login').update({ google_id: gid, name, picture }).eq('id', existing.id);
                         } else {
-                            await supabase.from('users_login').insert([{ email: gEmail, google_id: gid, name, picture, created_at: new Date() }]);
+                            await db.from('users_login').insert([{ email: gEmail, google_id: gid, name, picture, created_at: new Date() }]);
                         }
 
-                        // Now fetch purchases for this email
+                        // Save auth data
                         currentUserEmail = gEmail;
                         localStorage.setItem("loggedIn", "true");
                         localStorage.setItem("userEmail", gEmail);
@@ -337,6 +364,10 @@ async function loginWithPassword() {
         if (statusMsg) { statusMsg.style.color = 'red'; statusMsg.innerText = "Please enter your password."; }
         return;
     }
+    if (!db) {
+        if (statusMsg) { statusMsg.style.color = 'red'; statusMsg.innerText = "Database not connected. Please refresh."; }
+        return;
+    }
 
     if (statusMsg) {
         statusMsg.style.color = '#fff';
@@ -344,7 +375,7 @@ async function loginWithPassword() {
     }
 
     try {
-        const { data, error } = await supabase.from('users_login').select('*').eq('email', email).eq('password', password);
+        const { data, error } = await db.from('users_login').select('*').eq('email', email).eq('password', password);
         if (error) throw error;
 
         if (data && data.length > 0) {
@@ -379,6 +410,10 @@ async function signUpWithPassword() {
         if (statusMsg) { statusMsg.style.color = 'red'; statusMsg.innerText = "Password must be at least 6 characters."; }
         return;
     }
+    if (!db) {
+        if (statusMsg) { statusMsg.style.color = 'red'; statusMsg.innerText = "Database not connected. Please refresh."; }
+        return;
+    }
 
     if (statusMsg) {
         statusMsg.style.color = '#fff';
@@ -386,13 +421,13 @@ async function signUpWithPassword() {
     }
 
     try {
-        const { data: existing } = await supabase.from('users_login').select('email').eq('email', email);
+        const { data: existing } = await db.from('users_login').select('email').eq('email', email);
         if (existing && existing.length > 0) {
             if (statusMsg) { statusMsg.style.color = 'red'; statusMsg.innerText = "Account already exists. Please login."; }
             return;
         }
 
-        const { data: nu, error } = await supabase.from('users_login').insert([{
+        const { data: nu, error } = await db.from('users_login').insert([{
             email: email, password: password,
             name: email.split('@')[0],
             created_at: new Date()
@@ -426,11 +461,13 @@ function logoutDashboard() {
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', async () => {
-    // Check if user is already logged in
+    // Check if user is already logged in from localStorage
     const em = localStorage.getItem("userEmail");
     const loggedIn = localStorage.getItem("loggedIn");
+
     if (loggedIn === "true" && em) {
         document.getElementById('email-input').value = em;
+        // Auto-fetch purchases without requiring re-auth
         await fetchPurchases();
         return;
     }

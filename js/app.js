@@ -98,16 +98,40 @@ async function checkAuthStatus() {
     const em = localStorage.getItem("userEmail");
     if (localStorage.getItem("loggedIn") === "true" && em) {
         try {
-            const { data, error } = await sb.from('users_login').select('*').eq('email', em).single();
+            // First try users_login table
+            const { data, error } = await sb.from('users_login').select('*').eq('email', em).maybeSingle();
             if (data && !error) {
                 isAuthenticated = true;
                 currentUser = data;
                 updateUIAuth();
             } else {
-                logout();
+                // User may exist only in purchase table - still consider them authenticated
+                // Use localStorage twss_user data if available
+                const savedUser = JSON.parse(localStorage.getItem('twss_user') || 'null');
+                if (savedUser && savedUser.email === em) {
+                    isAuthenticated = true;
+                    currentUser = savedUser;
+                    updateUIAuth();
+                } else {
+                    // Last resort: check purchase table
+                    const { data: pData } = await sb.from('purchase').select('email').eq('email', em).limit(1);
+                    if (pData && pData.length > 0) {
+                        isAuthenticated = true;
+                        currentUser = { email: em, name: em.split('@')[0] };
+                        updateUIAuth();
+                    }
+                    // If not in purchase table either, don't force logout - just show unauth UI
+                }
             }
         } catch (e) {
             console.error('Auth check error:', e);
+            // Network error - don't logout, use cached data
+            const savedUser = JSON.parse(localStorage.getItem('twss_user') || 'null');
+            if (savedUser) {
+                isAuthenticated = true;
+                currentUser = savedUser;
+                updateUIAuth();
+            }
         }
     }
 }
