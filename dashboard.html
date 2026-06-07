@@ -11,7 +11,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/x-icon" href="https://admin.speedexam.net/logo/dc3e4eab-a58d-4730-91c3-9ec209773c04.png">
 
@@ -19,136 +19,433 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
-    <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
 
-<!-- Custom Cursor -->
-<div id="cur-dot"></div>
-<div id="cur-ring"></div>
-
 <!-- ═══════════════════════ HEADER ═══════════════════════ -->
-<header class="header solid" id="header">
-    <div class="header-inner">
-        <a href="index.html" class="logo h-target">
-            <i class="fas fa-cube"></i> TWSS
-        </a>
-        <nav class="nav-menu">
-            <a href="index.html" class="h-target">Home</a>
-            <a href="courses.html" class="h-target">Courses</a>
-            <a href="dashboard.html" class="h-target active">Dashboard</a>
-            <a href="about.html" class="h-target">About</a>
-            <a href="contact.html" class="h-target">Contact</a>
-        </nav>
-        <div style="display:flex; gap:12px; align-items:center;">
-            <a href="courses.html" class="auth-btn ghost h-target"><i class="fas fa-book"></i> Buy Courses</a>
-            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
-                <span></span><span></span><span></span>
-            </button>
-        </div>
-    </div>
+<header class="dash-header">
+    <a href="index.html" class="dash-logo">TW<span>SS</span> Dashboard</a>
+    <a href="courses.html" class="dash-header-btn">Buy Courses</a>
 </header>
 
 <!-- ═══════════════════════ DASHBOARD ═══════════════════════ -->
-<main class="dashboard-main">
+<div class="dash-container">
+
     <!-- Auth Section -->
-    <div id="auth-section" class="dashboard-auth">
-        <div class="auth-card">
-            <div class="auth-icon"><i class="fas fa-lock"></i></div>
-            <h2>Access Your Content</h2>
-            <p>Sign in to view your purchased courses and learning library.</p>
+    <div id="auth-section" class="login-box">
+        <h2><i class="fas fa-lock" style="margin-right:10px;color:#888;"></i>Access Your Content</h2>
+        <p style="color: #666; margin-bottom: 20px;">Enter the email used during purchase</p>
+        <input type="email" id="email-input" placeholder="name@example.com">
+        <button class="dash-btn-primary" onclick="fetchPurchases()">
+            <i class="fas fa-search"></i> Check Purchases
+        </button>
 
-            <!-- OAuth Buttons -->
-            <div class="oauth-buttons">
-                <button class="oauth-btn google-btn" onclick="loginWithGoogle()">
-                    <i class="fab fa-google"></i> Continue with Google
-                </button>
-                <button class="oauth-btn github-btn" onclick="loginWithGitHub()">
-                    <i class="fab fa-github"></i> Continue with GitHub
-                </button>
-            </div>
+        <!-- OAuth Buttons -->
+        <div class="oauth-section">
+            <button class="oauth-btn google-btn" onclick="loginWithGoogle()">
+                <i class="fab fa-google"></i> Continue with Google
+            </button>
+        </div>
 
-            <div class="auth-divider"><span>or sign in with email</span></div>
+        <!-- Password Login Toggle -->
+        <div class="password-toggle">
+            <a href="#" onclick="togglePasswordLogin(); return false;" id="pw-toggle-link">Login with password instead</a>
+        </div>
 
-            <!-- Email Input -->
-            <input type="email" id="email-input" placeholder="Enter your email" autocomplete="email">
-
-            <!-- Name (signup only) -->
-            <div id="name-field" style="display:none;">
-                <input type="text" id="name-input" placeholder="Full Name" autocomplete="name">
-            </div>
-
-            <!-- Password (login/signup) -->
-            <div id="password-field">
-                <input type="password" id="password-input" placeholder="Password" autocomplete="current-password">
-            </div>
-
-            <!-- Action Buttons -->
-            <button class="dash-btn" id="password-btn" onclick="loginWithPassword()">
+        <div id="password-section" style="display:none;">
+            <input type="password" id="password-input" placeholder="Password">
+            <button class="dash-btn-primary" onclick="loginWithPassword()">
                 <i class="fas fa-sign-in-alt"></i> Login with Password
             </button>
-            <button class="dash-btn outline" id="otp-btn" onclick="sendMagicLink()">
-                <i class="fas fa-magic"></i> Send Login Link (OTP)
-            </button>
-            <button class="dash-btn" id="signup-btn" style="display:none;" onclick="signUpWithPassword()">
+            <button class="dash-btn-secondary" onclick="signUpWithPassword()" style="margin-top:8px;">
                 <i class="fas fa-user-plus"></i> Create Account
             </button>
-
-            <!-- Toggle Links -->
-            <p id="toggle-links" class="auth-toggle">
-                Don't have an account? <a href="#" onclick="toggleAuthMode('signup')">Sign Up</a>
-            </p>
-
-            <div id="status-msg" class="status-msg"></div>
         </div>
+
+        <div id="status-msg" class="status-msg"></div>
     </div>
 
     <!-- Content Section -->
-    <div id="content-section" style="display:none;">
-        <div class="dashboard-header">
-            <div>
-                <h2>Your Library</h2>
-                <p class="user-email" id="dash-user-email"></p>
+    <div id="content-section" style="display: none;">
+        <div class="content-header">
+            <h2><i class="fas fa-book-open" style="margin-right:12px;"></i>Your Library</h2>
+            <div style="display:flex;gap:10px;align-items:center;">
+                <span id="dash-user-email" style="color:#888;font-size:0.85rem;margin-right:10px;"></span>
+                <button class="dash-btn-exit" onclick="logoutDashboard()">
+                    <i class="fas fa-sign-out-alt"></i> Exit
+                </button>
             </div>
-            <button class="dash-btn outline" onclick="logoutDashboard()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
         </div>
 
-        <!-- Dashboard Stats -->
-        <div class="dashboard-stats" id="dashboard-stats"></div>
-
-        <!-- Real-time indicator -->
-        <div class="realtime-indicator">
-            <div class="realtime-dot"></div>
-            <span>Live Sync Active</span>
-        </div>
+        <!-- Stats -->
+        <div id="dashboard-stats" class="dash-stats"></div>
 
         <!-- Course List -->
-        <div id="courses-list" class="library-grid"></div>
+        <div id="courses-list" class="courses-grid"></div>
 
         <!-- Empty State -->
         <div id="empty-state" class="empty-state" style="display:none;">
             <div class="empty-icon"><i class="fas fa-book-open"></i></div>
             <div class="empty-title">No courses yet</div>
             <p class="empty-desc">You haven't purchased any courses yet. Browse our catalog to get started.</p>
-            <a href="courses.html" class="dash-btn" style="width:auto; display:inline-flex; padding:16px 36px;">
+            <a href="courses.html" class="dash-btn-primary" style="display:inline-flex;padding:14px 36px;text-decoration:none;">
                 <i class="fas fa-arrow-right"></i> Browse Courses
             </a>
         </div>
     </div>
-</main>
+</div>
 
 <!-- ═══════════════════════ FOOTER ═══════════════════════ -->
-<footer class="footer">
-    <div class="footer-inner">
-        <div class="footer-bottom" style="border:none; padding-top:0;">
-            <span>&copy; 2026 TWSS Initiative. All Rights Reserved.</span>
-            <span>Developed by <a href="https://twss.netlify.app/portfolio" target="_blank" style="color:rgba(255,255,255,0.6);font-weight:700;letter-spacing:0.05em;">KARTHEEK</a></span>
-        </div>
-    </div>
+<footer class="dash-footer">
+    <span>&copy; 2026 TWSS Initiative. All Rights Reserved.</span>
+    <span>Developed by <a href="https://twss.netlify.app/portfolio" target="_blank" style="color:#888;font-weight:700;letter-spacing:0.05em;">KARTHEEK</a></span>
 </footer>
 
-<script src="js/app.js"></script>
-<script src="js/dashboard.js"></script>
+<script>
+// ── SECURITY ──
+function escapeHTML(str) {
+    if (typeof str !== 'string') return '';
+    return str.replace(/[<>"'&]/g, c => ({
+        '<': '&lt;', '>': '&gt;', '"': '&quot;',
+        "'": '&#x27;', '&': '&amp;'
+    }[c] || c));
+}
+
+function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Supabase Init
+const supabaseUrl = 'https://fzwvxesrtdilljgrntpw.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d3Z4ZXNydGRpbGxqZ3JudHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NzU2NzMsImV4cCI6MjA2NjQ1MTY3M30.YnxjUtFawuumihyVGuk8e-o6iE9OkDf-MX1aKRTqA5U';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+// Config
+const GOOGLE_CLIENT_ID = "930575952017-crls3493s43tld7rmsr0unf1il7qi627.apps.googleusercontent.com";
+
+// Course Name to Link Mapping
+const courseLinks = {
+    "C Language Notes": { link: "https://coursestwss.pages.dev/course/tab001", icon: "fas fa-code", type: "Notes" },
+    "C++ Language Notes": { link: "https://coursestwss.pages.dev/course/tab002", icon: "fas fa-cube", type: "Notes" },
+    "JAVA Language Notes": { link: "https://coursestwss.pages.dev/course/tab003", icon: "fab fa-java", type: "Notes" },
+    "Python Language Notes": { link: "https://coursestwss.pages.dev/course/tab004", icon: "fab fa-python", type: "Notes" },
+    "SQL Language Notes": { link: "https://coursestwss.pages.dev/course/tab005", icon: "fas fa-database", type: "Notes" },
+    "Website & Domain Plan": { link: "https://coursestwss.pages.dev/course/pre001", icon: "fas fa-globe", type: "Plan" },
+    "DSA + Full-Stack Plan": { link: "https://coursestwss.pages.dev/course/pre002", icon: "fas fa-layer-group", type: "Plan" },
+    "DSA + Data Analytics Plan": { link: "https://coursestwss.pages.dev/course/pre003", icon: "fas fa-chart-bar", type: "Plan" },
+    "4 Years College Plan": { link: "https://coursestwss.pages.dev/course/pre004", icon: "fas fa-graduation-cap", type: "Plan" }
+};
+
+let currentUserEmail = null;
+
+// ════════════════════════════════════════════
+// ── CHECK PURCHASES (main function) ──
+// ════════════════════════════════════════════
+async function fetchPurchases() {
+    const email = document.getElementById('email-input').value.trim();
+    const statusMsg = document.getElementById('status-msg');
+
+    if (!email) {
+        statusMsg.style.color = 'red';
+        statusMsg.innerText = "Please enter an email.";
+        return;
+    }
+
+    if (!isValidEmail(email)) {
+        statusMsg.style.color = 'red';
+        statusMsg.innerText = "Please enter a valid email address.";
+        return;
+    }
+
+    statusMsg.style.color = '#fff';
+    statusMsg.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Searching database...';
+
+    try {
+        // Fetch from 'purchase' table
+        const { data, error } = await supabase
+            .from('purchase')
+            .select('purchased_content')
+            .eq('email', email);
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            statusMsg.style.color = '#ccc';
+            statusMsg.innerText = "No purchases found for this email.";
+            return;
+        }
+
+        // Purchases found — show content
+        currentUserEmail = email;
+        localStorage.setItem("userEmail", email);
+        localStorage.setItem("loggedIn", "true");
+
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('content-section').style.display = 'block';
+
+        const emailEl = document.getElementById('dash-user-email');
+        if (emailEl) emailEl.textContent = email;
+
+        const listContainer = document.getElementById('courses-list');
+        listContainer.innerHTML = '';
+
+        // Using Set to avoid duplicate cards if user bought same item twice
+        const uniqueCourses = [...new Set(data.map(item => item.purchased_content))];
+
+        // Render stats
+        renderStats(uniqueCourses);
+
+        uniqueCourses.forEach(courseName => {
+            const courseInfo = courseLinks[courseName];
+            const link = courseInfo ? courseInfo.link : null;
+            const icon = courseInfo ? courseInfo.icon : 'fas fa-book';
+            const type = courseInfo ? courseInfo.type : 'Course';
+
+            if (link) {
+                listContainer.innerHTML += `
+                    <div class="course-card">
+                        <div class="course-card-icon"><i class="${icon}"></i></div>
+                        <div class="course-title">${escapeHTML(courseName)}</div>
+                        <p class="course-status"><i class="fas fa-check-circle"></i> Premium Access Unlocked &middot; ${escapeHTML(type)}</p>
+                        <a href="${link}" target="_blank" class="course-btn">
+                            <i class="fas fa-external-link-alt"></i> Open Course
+                        </a>
+                    </div>
+                `;
+            } else {
+                listContainer.innerHTML += `
+                    <div class="course-card">
+                        <div class="course-card-icon"><i class="${icon}"></i></div>
+                        <div class="course-title">${escapeHTML(courseName)}</div>
+                        <p class="course-status" style="color:#666;">Contact support for access link.</p>
+                    </div>
+                `;
+            }
+        });
+
+    } catch (err) {
+        console.error(err);
+        statusMsg.style.color = 'red';
+        statusMsg.innerText = "Error connecting to database.";
+    }
+}
+
+// ── RENDER STATS ──
+function renderStats(uniqueCourses) {
+    const statsEl = document.getElementById('dashboard-stats');
+    if (!statsEl) return;
+
+    const notesCount = uniqueCourses.filter(c => courseLinks[c]?.type === 'Notes').length;
+    const plansCount = uniqueCourses.filter(c => courseLinks[c]?.type === 'Plan').length;
+
+    statsEl.innerHTML = `
+        <div class="stat-box">
+            <div class="stat-num">${uniqueCourses.length}</div>
+            <div class="stat-label">Total Courses</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-num">${notesCount}</div>
+            <div class="stat-label">Notes</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-num">${plansCount}</div>
+            <div class="stat-label">Plans</div>
+        </div>
+    `;
+}
+
+// ════════════════════════════════════════════
+// ── GOOGLE SIGN-IN ──
+// ════════════════════════════════════════════
+async function loginWithGoogle() {
+    const statusMsg = document.getElementById('status-msg');
+
+    if (window.google && window.google.accounts) {
+        try {
+            google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: async (response) => {
+                    try {
+                        const base64Url = response.credential.split('.')[1];
+                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                        }).join(''));
+                        const { email: gEmail, name, picture, sub: gid } = JSON.parse(jsonPayload);
+
+                        // Find or create user in users_login
+                        const { data: existing } = await supabase.from('users_login').select('*').eq('email', gEmail).maybeSingle();
+                        if (existing) {
+                            await supabase.from('users_login').update({ google_id: gid, name, picture }).eq('id', existing.id);
+                        } else {
+                            await supabase.from('users_login').insert([{ email: gEmail, google_id: gid, name, picture, created_at: new Date() }]);
+                        }
+
+                        // Now fetch purchases for this email
+                        currentUserEmail = gEmail;
+                        localStorage.setItem("loggedIn", "true");
+                        localStorage.setItem("userEmail", gEmail);
+                        localStorage.setItem("twss_user", JSON.stringify({ email: gEmail, name, picture }));
+
+                        // Populate email and trigger purchase check
+                        document.getElementById('email-input').value = gEmail;
+                        await fetchPurchases();
+                    } catch (e) {
+                        if (statusMsg) { statusMsg.style.color = 'red'; statusMsg.innerText = 'Google sign-in error: ' + e.message; }
+                    }
+                }
+            });
+            google.accounts.id.prompt();
+            return;
+        } catch (e) {
+            console.error('Google Identity Services error:', e);
+        }
+    }
+
+    if (statusMsg) {
+        statusMsg.style.color = '#ccc';
+        statusMsg.innerText = "Google Sign-In is not available. Please use email to check purchases.";
+    }
+}
+
+// ════════════════════════════════════════════
+// ── PASSWORD LOGIN ──
+// ════════════════════════════════════════════
+function togglePasswordLogin() {
+    const section = document.getElementById('password-section');
+    const link = document.getElementById('pw-toggle-link');
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        link.textContent = 'Hide password login';
+    } else {
+        section.style.display = 'none';
+        link.textContent = 'Login with password instead';
+    }
+}
+
+async function loginWithPassword() {
+    const email = document.getElementById('email-input').value.trim();
+    const password = document.getElementById('password-input').value;
+    const statusMsg = document.getElementById('status-msg');
+
+    if (!email || !isValidEmail(email)) {
+        if (statusMsg) { statusMsg.style.color = 'red'; statusMsg.innerText = "Please enter a valid email address above."; }
+        return;
+    }
+    if (!password) {
+        if (statusMsg) { statusMsg.style.color = 'red'; statusMsg.innerText = "Please enter your password."; }
+        return;
+    }
+
+    if (statusMsg) {
+        statusMsg.style.color = '#fff';
+        statusMsg.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+    }
+
+    try {
+        const { data, error } = await supabase.from('users_login').select('*').eq('email', email).eq('password', password);
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            currentUserEmail = email;
+            localStorage.setItem("loggedIn", "true");
+            localStorage.setItem("userEmail", email);
+            localStorage.setItem("twss_user", JSON.stringify({
+                email: data[0].email,
+                name: data[0].name || email.split('@')[0],
+                picture: data[0].picture
+            }));
+            await fetchPurchases();
+        } else {
+            if (statusMsg) { statusMsg.style.color = 'red'; statusMsg.innerText = "Invalid email or password. Try creating an account first."; }
+        }
+    } catch (err) {
+        console.error('Password login error:', err);
+        if (statusMsg) { statusMsg.style.color = 'red'; statusMsg.innerText = err.message || "Login failed."; }
+    }
+}
+
+async function signUpWithPassword() {
+    const email = document.getElementById('email-input').value.trim();
+    const password = document.getElementById('password-input').value;
+    const statusMsg = document.getElementById('status-msg');
+
+    if (!email || !isValidEmail(email)) {
+        if (statusMsg) { statusMsg.style.color = 'red'; statusMsg.innerText = "Please enter a valid email address above."; }
+        return;
+    }
+    if (!password || password.length < 6) {
+        if (statusMsg) { statusMsg.style.color = 'red'; statusMsg.innerText = "Password must be at least 6 characters."; }
+        return;
+    }
+
+    if (statusMsg) {
+        statusMsg.style.color = '#fff';
+        statusMsg.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
+    }
+
+    try {
+        const { data: existing } = await supabase.from('users_login').select('email').eq('email', email);
+        if (existing && existing.length > 0) {
+            if (statusMsg) { statusMsg.style.color = 'red'; statusMsg.innerText = "Account already exists. Please login."; }
+            return;
+        }
+
+        const { data: nu, error } = await supabase.from('users_login').insert([{
+            email: email, password: password,
+            name: email.split('@')[0],
+            created_at: new Date()
+        }]).select();
+
+        if (error) throw error;
+
+        if (nu && nu[0]) {
+            currentUserEmail = email;
+            localStorage.setItem("loggedIn", "true");
+            localStorage.setItem("userEmail", email);
+            localStorage.setItem("twss_user", JSON.stringify({
+                email: email, name: email.split('@')[0]
+            }));
+            await fetchPurchases();
+        }
+    } catch (err) {
+        console.error('Signup error:', err);
+        if (statusMsg) { statusMsg.style.color = 'red'; statusMsg.innerText = err.message || "Error creating account."; }
+    }
+}
+
+// ── LOGOUT ──
+function logoutDashboard() {
+    currentUserEmail = null;
+    localStorage.removeItem("loggedIn");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("twss_user");
+    location.reload();
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check if user is already logged in
+    const em = localStorage.getItem("userEmail");
+    const loggedIn = localStorage.getItem("loggedIn");
+    if (loggedIn === "true" && em) {
+        document.getElementById('email-input').value = em;
+        await fetchPurchases();
+        return;
+    }
+
+    // Also check twss_user format
+    const user = JSON.parse(localStorage.getItem('twss_user') || 'null');
+    if (user && user.email) {
+        document.getElementById('email-input').value = user.email;
+    }
+
+    // Allow Enter key on email input
+    document.getElementById('email-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') fetchPurchases();
+    });
+});
+</script>
 </body>
 </html>
