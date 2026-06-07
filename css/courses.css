@@ -2,6 +2,45 @@
    Courses Page — Ultra-Premium Redesign
    ═══════════════════════════════════════════ */
 
+/* ── PAGE-SPECIFIC OVERRIDES (dark theme over video) ── */
+body .header.solid {
+    background: rgba(8,8,8,0.5);
+    backdrop-filter: blur(20px) saturate(1.4);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+}
+body .logo { color: #fff; }
+body .nav-menu a, body .dropbtn { color: rgba(255,255,255,0.6); }
+body .nav-menu a:hover, body .dropbtn:hover, body .nav-menu a.active { color: #fff; }
+body .auth-btn.ghost { color: #fff; border-color: rgba(255,255,255,0.25); }
+body .auth-btn.ghost:hover { border-color: #fff; background: rgba(255,255,255,0.08); }
+body .cart-btn { color: #fff; }
+body .cart-count { background: #fff; color: #080808; }
+body .mobile-menu-btn span { background: #fff; }
+body .dropdown-content { background: rgba(20,20,20,0.95); border-color: rgba(255,255,255,0.08); }
+body .dropdown-content a { color: rgba(255,255,255,0.55); }
+body .dropdown-content a:hover { color: #fff; }
+body .mobile-nav { background: rgba(8,8,8,0.95); }
+body .mobile-nav-links a { color: #fff; border-bottom-color: rgba(255,255,255,0.08); }
+body .mobile-close { color: #fff; }
+#cur-dot { background: #fff; }
+#cur-ring { border-color: #fff; }
+
+/* Override noise grain — it blocks the video */
+body::after { display: none; }
+
+/* Profile section overrides for dark theme */
+body .profile-btn:hover { background: rgba(255,255,255,0.08); }
+body .profile-icon { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
+body #profileName { color: #fff; }
+body .profile-menu { background: rgba(20,20,20,0.95); border-color: rgba(255,255,255,0.08); }
+body .profile-menu-info { border-bottom-color: rgba(255,255,255,0.08); }
+body .profile-menu-info .pname { color: #fff; }
+body .profile-menu-info .pemail { color: rgba(255,255,255,0.5); }
+body .profile-menu-link { color: rgba(255,255,255,0.55); }
+body .profile-menu-link:hover { color: #fff; }
+body .logout-btn { background: #fff; color: #080808; }
+body .logout-btn:hover { background: rgba(255,255,255,0.85); }
+
 /* ── COURSES HERO ── */
 .courses-hero {
     position: relative;
@@ -13,23 +52,24 @@
     overflow: hidden;
 }
 
-/* Video Background */
+/* Video Background — fixed so it stays behind entire page */
 .courses-hero-video {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    z-index: 0;
+    z-index: -1;
 }
 
-/* Dark overlay so text is readable over the video */
+/* Dark overlay so text is readable over the video — fixed to cover whole viewport */
 .courses-hero-overlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
-    z-index: 1;
-    background: linear-gradient(165deg, rgba(8,8,8,0.60) 0%, rgba(8,8,8,0.78) 50%, rgba(8,8,8,0.92) 100%);
+    z-index: -1;
+    background: linear-gradient(165deg, rgba(8,8,8,0.55) 0%, rgba(8,8,8,0.70) 50%, rgba(8,8,8,0.85) 100%);
+    pointer-events: none;
 }
 
 .courses-hero-content {
@@ -100,7 +140,7 @@
 /* ── COURSES SECTION ── */
 .courses-section {
     padding: 120px 5% 140px;
-    background: var(--paper);
+    background: transparent;
     position: relative;
 }
 .courses-section::before {
@@ -110,7 +150,7 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, var(--faint) 20%, var(--faint) 80%, transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15) 20%, rgba(255,255,255,0.15) 80%, transparent);
 }
 .courses-inner {
     max-width: 1280px;
@@ -130,7 +170,7 @@
     font-weight: 700;
     letter-spacing: 0.3em;
     text-transform: uppercase;
-    color: var(--mid);
+    color: rgba(255,255,255,0.45);
     margin-bottom: 16px;
     display: inline-flex;
     align-items: center;
@@ -141,7 +181,7 @@
     content: '';
     width: 32px;
     height: 1px;
-    background: var(--faint);
+    background: rgba(255,255,255,0.2);
 }
 .section-title {
     font-family: var(--ff-disp);
@@ -149,13 +189,14 @@
     font-weight: 300;
     letter-spacing: -0.02em;
     line-height: 1.1;
+    color: #fff;
 }
 .section-title em { font-style: italic; font-weight: 600; }
 .section-sub {
     margin-top: 18px;
     max-width: 560px;
     font-size: 0.92rem;
-    color: var(--mid);
+    color: rgba(255,255,255,0.55);
     line-height: 1.8;
 }
 
@@ -165,9 +206,9 @@
     gap: 6px;
     margin-bottom: 56px;
     justify-content: center;
-    background: #fff;
+    background: rgba(255,255,255,0.06);
     padding: 6px;
-    border: 1px solid var(--faint);
+    border: 1px solid rgba(255,255,255,0.1);
     border-radius: 3px;
     width: fit-content;
     margin-left: auto;
@@ -182,20 +223,20 @@
     padding: 12px 28px;
     border: none;
     background: transparent;
-    color: var(--mid);
+    color: rgba(255,255,255,0.5);
     border-radius: 2px;
     cursor: none;
     transition: all 0.3s var(--ease-out);
     position: relative;
 }
 .filter-btn:hover {
-    color: var(--ink);
-    background: var(--faint);
+    color: #fff;
+    background: rgba(255,255,255,0.08);
 }
 .filter-btn.active {
-    background: var(--ink);
-    color: var(--paper);
-    box-shadow: 0 4px 12px rgba(8,8,8,0.15);
+    background: #fff;
+    color: #080808;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 /* ── PREMIUM COURSE CARDS — ULTRA REDESIGN ── */
@@ -206,8 +247,8 @@
 }
 
 .premium-card {
-    background: #fff;
-    border: 1px solid var(--faint);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
     border-radius: 6px;
     padding: 0;
     position: relative;
@@ -215,7 +256,8 @@
     transition: all 0.5s var(--ease-out);
     display: flex;
     flex-direction: column;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    backdrop-filter: blur(8px);
 }
 .premium-card::before {
     content: '';
@@ -224,7 +266,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--ink), #333);
+    background: linear-gradient(90deg, #fff, rgba(255,255,255,0.5));
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.5s var(--ease-out);
@@ -237,7 +279,7 @@
     position: absolute;
     inset: 0;
     border-radius: 6px;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.12);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.35);
     opacity: 0;
     transition: opacity 0.5s var(--ease-out);
     pointer-events: none;
@@ -246,16 +288,17 @@
     opacity: 1;
 }
 .premium-card:hover {
-    border-color: transparent;
+    border-color: rgba(255,255,255,0.2);
     transform: translateY(-10px);
+    background: rgba(255,255,255,0.1);
 }
 
 .premium-card.featured {
-    border-color: rgba(8,8,8,0.12);
-    background: linear-gradient(180deg, #fff 0%, #fafaf8 100%);
+    border-color: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.08);
 }
 .premium-card.featured::before {
-    background: linear-gradient(90deg, var(--ink), #555, var(--ink));
+    background: linear-gradient(90deg, #fff, rgba(255,255,255,0.4), #fff);
     background-size: 200% 100%;
     animation: shimmer 3s ease-in-out infinite;
     transform: scaleX(1);
@@ -283,8 +326,8 @@
     font-weight: 700;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    background: var(--faint);
-    color: var(--mid);
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.5);
     border-radius: 3px;
     margin-bottom: 24px;
     width: fit-content;
@@ -294,14 +337,14 @@
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: var(--mid);
+    background: rgba(255,255,255,0.4);
 }
 .featured-badge {
-    background: var(--ink);
-    color: var(--paper);
+    background: #fff;
+    color: #080808;
 }
 .featured-badge::before {
-    background: var(--paper);
+    background: #080808;
 }
 
 /* Card Icon */
@@ -309,15 +352,15 @@
     width: 60px;
     height: 60px;
     border-radius: 8px;
-    background: linear-gradient(135deg, var(--faint) 0%, #fff 100%);
+    background: rgba(255,255,255,0.06);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.4rem;
-    color: var(--ink);
+    color: rgba(255,255,255,0.7);
     margin-bottom: 26px;
     transition: all 0.4s var(--ease-out);
-    border: 1px solid var(--faint);
+    border: 1px solid rgba(255,255,255,0.08);
     position: relative;
     overflow: hidden;
 }
@@ -325,7 +368,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: var(--ink);
+    background: #fff;
     border-radius: 8px;
     transform: scale(0);
     transition: transform 0.4s var(--ease-out);
@@ -334,7 +377,7 @@
     transform: scale(1);
 }
 .premium-card:hover .card-icon-wrap {
-    color: var(--paper);
+    color: #080808;
     border-color: transparent;
 }
 .premium-card:hover .card-icon-wrap i {
@@ -349,12 +392,12 @@
     font-size: 1.15rem;
     letter-spacing: 0.01em;
     margin-bottom: 12px;
-    color: var(--ink);
+    color: #fff;
     line-height: 1.3;
 }
 .card-desc {
     font-size: 0.84rem;
-    color: var(--mid);
+    color: rgba(255,255,255,0.55);
     line-height: 1.75;
     margin-bottom: 0;
     flex: 1;
@@ -366,14 +409,14 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 32px 28px;
-    border-top: 1px solid var(--faint);
-    background: linear-gradient(180deg, transparent, rgba(249,248,245,0.5));
+    border-top: 1px solid rgba(255,255,255,0.08);
+    background: linear-gradient(180deg, transparent, rgba(255,255,255,0.03));
 }
 .card-price {
     font-family: var(--ff-disp);
     font-size: 2rem;
     font-weight: 600;
-    color: var(--ink);
+    color: #fff;
     line-height: 1;
 }
 .card-price-currency {
@@ -392,9 +435,9 @@
     letter-spacing: 0.14em;
     text-transform: uppercase;
     padding: 13px 26px;
-    background: var(--ink);
-    color: var(--paper);
-    border: 1.5px solid var(--ink);
+    background: #fff;
+    color: #080808;
+    border: 1.5px solid #fff;
     border-radius: 3px;
     cursor: none;
     transition: all 0.35s var(--ease-out);
@@ -419,7 +462,7 @@
 }
 .add-to-cart-btn:hover {
     background: transparent;
-    color: var(--ink);
+    color: #fff;
     transform: scale(1.02);
 }
 .add-to-cart-btn span {
@@ -430,8 +473,8 @@
 /* Card in cart state */
 .add-to-cart-btn.in-cart {
     background: transparent;
-    color: #1a7a3f;
-    border-color: #1a7a3f;
+    color: #4ade80;
+    border-color: #4ade80;
     pointer-events: none;
 }
 .add-to-cart-btn.in-cart::before {
@@ -441,7 +484,7 @@
 /* ── TRUST SECTION ── */
 .courses-trust {
     padding: 80px 5%;
-    background: var(--ink);
+    background: transparent;
 }
 .courses-trust-inner {
     max-width: 1200px;
@@ -492,6 +535,7 @@
     padding: 16px 0;
     border-bottom: 1px solid var(--faint);
     font-size: 0.9rem;
+    color: var(--ink);
     transition: background 0.2s;
 }
 .cart-list li:last-child {
@@ -529,7 +573,7 @@
 }
 .cart-item-remove:hover {
     color: #9a1212;
-    background: #fef2f2;
+    background: rgba(254,242,242,0.5);
 }
 .cart-total {
     text-align: right;
@@ -668,4 +712,10 @@
     .courses-trust-inner { grid-template-columns: 1fr 1fr; }
     .card-inner { padding: 28px 24px 20px; }
     .card-footer { padding: 16px 24px 22px; }
+}
+
+/* ── FOOTER OVERRIDES (transparent over video) ── */
+body .footer {
+    background: rgba(8,8,8,0.6);
+    backdrop-filter: blur(12px);
 }

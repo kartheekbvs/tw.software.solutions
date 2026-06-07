@@ -18,10 +18,16 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/courses.css">
+    <link rel="stylesheet" href="css/style.css?v=20260607b">
+    <link rel="stylesheet" href="css/courses.css?v=20260607b">
 </head>
-<body>
+<body style="background:#080808;">
+
+<!-- Video Background (fixed, behind everything) -->
+<video class="courses-hero-video" autoplay muted loop playsinline preload="auto">
+    <source src="https://twss-awe.pages.dev/no_probelm_any_perso_is_kicjin.mp4" type="video/mp4">
+</video>
+<div class="courses-hero-overlay"></div>
 
 <!-- Custom Cursor -->
 <div id="cur-dot"></div>
@@ -63,10 +69,6 @@
 
 <!-- ═══════════════════════ COURSES HERO ═══════════════════════ -->
 <section class="courses-hero">
-    <video class="courses-hero-video" autoplay muted loop playsinline preload="auto">
-        <source src="https://twss-awe.pages.dev/no_probelm_any_perso_is_kicjin.mp4" type="video/mp4">
-    </video>
-    <div class="courses-hero-overlay"></div>
     <div class="courses-hero-content">
         <p class="hero-eyebrow">Premium Learning</p>
         <h1>Master Data &<br><em>Development</em></h1>
