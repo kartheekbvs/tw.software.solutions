@@ -135,69 +135,63 @@ function closeAuthModal() {
 
 /* ── RENDER LOGIN FORM ── */
 function renderLogin() {
-    const form = document.getElementById('authForm');
+    var form = document.getElementById('authForm');
     if (!form) return;
-    form.innerHTML = `
-        <h2>Sign In</h2>
-        <div id="googleSignInButton"></div>
-        <div class="auth-divider"><span>or</span></div>
-        <input type="email" id="loginEmail" placeholder="Email address">
-        <input type="password" id="loginPassword" placeholder="Password" onkeydown="if(event.key==='Enter') login()">
-        <button type="button" onclick="login()">Sign In</button>
-        <div class="auth-status" id="authStatus" style="display:none;"></div>
-        <p>New here? <a href="#" onclick="event.preventDefault();renderSignup()">Create account</a></p>
-        <p style="margin-top:8px;">Forgot password? <a href="#" onclick="event.preventDefault();renderForgot()">Reset it</a></p>
-    `;
+    form.innerHTML = '<h2>Sign In</h2>' +
+        '<div id="googleSignInButton"></div>' +
+        '<div class="auth-divider"><span>or</span></div>' +
+        '<input type="email" id="loginEmail" placeholder="Email address">' +
+        '<input type="password" id="loginPassword" placeholder="Password" onkeydown="if(event.key===\'Enter\') login()">' +
+        '<button type="button" onclick="login()">Sign In</button>' +
+        '<div class="auth-status" id="authStatus" style="display:none;"></div>' +
+        '<p>New here? <a href="#" onclick="event.preventDefault();renderSignup()">Create account</a></p>' +
+        '<p style="margin-top:8px;">Forgot password? <a href="#" onclick="event.preventDefault();renderForgot()">Reset it</a></p>';
     setTimeout(initGoogleBtn, 200);
 }
 
 /* ── RENDER SIGNUP FORM ── */
 function renderSignup() {
-    const form = document.getElementById('authForm');
+    var form = document.getElementById('authForm');
     if (!form) return;
-    form.innerHTML = `
-        <h2>Create Account</h2>
-        <div id="googleSignInButton"></div>
-        <div class="auth-divider"><span>or</span></div>
-        <div id="emailBox">
-            <input type="email" id="signupEmail" placeholder="Email address">
-            <input type="password" id="signupPassword" placeholder="Password (min 6 chars)">
-            <button type="button" id="sendOtpBtn">Send OTP</button>
-        </div>
-        <div id="otpBox" style="display:none">
-            <p style="font-size:0.82rem;color:var(--mid);margin-bottom:14px;text-align:center;">Check your inbox for the OTP</p>
-            <input type="text" id="otpInput" placeholder="6-digit OTP" maxlength="6" style="letter-spacing:0.3em;font-size:1.3rem;text-align:center;">
-            <button type="button" id="verifyOtpBtn">Verify & Create Account</button>
-            <div id="otpMsg" style="font-size:0.8rem;margin-top:8px;text-align:center;"></div>
-            <button type="button" id="resendOtpBtn" disabled style="width:100%;padding:10px;background:none;color:var(--mid);border:1px solid var(--faint);font-size:0.72rem;margin-top:10px;cursor:pointer;font-family:var(--ff-ui);letter-spacing:0.08em;">Resend in ${RESEND_S}s</button>
-        </div>
-        <div class="auth-status" id="authStatus" style="display:none;"></div>
-        <p>Have an account? <a href="#" onclick="event.preventDefault();renderLogin()">Sign in</a></p>
-    `;
-    setTimeout(() => { initGoogleBtn(); bindOtp(); }, 200);
+    form.innerHTML = '<h2>Create Account</h2>' +
+        '<div id="googleSignInButton"></div>' +
+        '<div class="auth-divider"><span>or</span></div>' +
+        '<div id="emailBox">' +
+            '<input type="email" id="signupEmail" placeholder="Email address">' +
+            '<input type="password" id="signupPassword" placeholder="Password (min 6 chars)">' +
+            '<button type="button" id="sendOtpBtn">Send OTP</button>' +
+        '</div>' +
+        '<div id="otpBox" style="display:none">' +
+            '<p style="font-size:0.82rem;color:var(--mid);margin-bottom:14px;text-align:center;">Check your inbox for the OTP</p>' +
+            '<input type="text" id="otpInput" placeholder="6-digit OTP" maxlength="6" style="letter-spacing:0.3em;font-size:1.3rem;text-align:center;">' +
+            '<button type="button" id="verifyOtpBtn">Verify & Create Account</button>' +
+            '<div id="otpMsg" style="font-size:0.8rem;margin-top:8px;text-align:center;"></div>' +
+            '<button type="button" id="resendOtpBtn" disabled style="width:100%;padding:10px;background:none;color:var(--mid);border:1px solid var(--faint);font-size:0.72rem;margin-top:10px;cursor:pointer;font-family:var(--ff-ui);letter-spacing:0.08em;">Resend in ' + RESEND_S + 's</button>' +
+        '</div>' +
+        '<div class="auth-status" id="authStatus" style="display:none;"></div>' +
+        '<p>Have an account? <a href="#" onclick="event.preventDefault();renderLogin()">Sign in</a></p>';
+    setTimeout(function() { initGoogleBtn(); bindOtp(); }, 200);
 }
 
 /* ── RENDER FORGOT PASSWORD FORM ── */
 function renderForgot() {
-    const form = document.getElementById('authForm');
+    var form = document.getElementById('authForm');
     if (!form) return;
-    form.innerHTML = `
-        <h2>Reset Password</h2>
-        <div id="forgotBox">
-            <p style="font-size:0.82rem;color:var(--mid);margin-bottom:18px;text-align:center;">Enter your email to receive a reset code.</p>
-            <input type="email" id="forgotEmail" placeholder="Email address">
-            <button type="button" id="sendForgotBtn">Send Reset Code</button>
-        </div>
-        <div id="resetBox" style="display:none">
-            <input type="text" id="resetOtp" placeholder="Reset code" maxlength="6" style="letter-spacing:0.3em;font-size:1.3rem;text-align:center;">
-            <input type="password" id="newPass" placeholder="New password">
-            <button type="button" id="verifyResetBtn">Set New Password</button>
-            <div id="resetMsg" style="font-size:0.8rem;margin-top:8px;text-align:center;"></div>
-            <button type="button" id="resendResetBtn" disabled style="width:100%;padding:10px;background:none;color:var(--mid);border:1px solid var(--faint);font-size:0.72rem;margin-top:10px;cursor:pointer;font-family:var(--ff-ui);">Resend in ${RESEND_S}s</button>
-        </div>
-        <div class="auth-status" id="authStatus" style="display:none;"></div>
-        <p>Remembered? <a href="#" onclick="event.preventDefault();renderLogin()">Sign in</a></p>
-    `;
+    form.innerHTML = '<h2>Reset Password</h2>' +
+        '<div id="forgotBox">' +
+            '<p style="font-size:0.82rem;color:var(--mid);margin-bottom:18px;text-align:center;">Enter your email to receive a reset code.</p>' +
+            '<input type="email" id="forgotEmail" placeholder="Email address">' +
+            '<button type="button" id="sendForgotBtn">Send Reset Code</button>' +
+        '</div>' +
+        '<div id="resetBox" style="display:none">' +
+            '<input type="text" id="resetOtp" placeholder="Reset code" maxlength="6" style="letter-spacing:0.3em;font-size:1.3rem;text-align:center;">' +
+            '<input type="password" id="newPass" placeholder="New password">' +
+            '<button type="button" id="verifyResetBtn">Set New Password</button>' +
+            '<div id="resetMsg" style="font-size:0.8rem;margin-top:8px;text-align:center;"></div>' +
+            '<button type="button" id="resendResetBtn" disabled style="width:100%;padding:10px;background:none;color:var(--mid);border:1px solid var(--faint);font-size:0.72rem;margin-top:10px;cursor:pointer;font-family:var(--ff-ui);">Resend in ' + RESEND_S + 's</button>' +
+        '</div>' +
+        '<div class="auth-status" id="authStatus" style="display:none;"></div>' +
+        '<p>Remembered? <a href="#" onclick="event.preventDefault();renderLogin()">Sign in</a></p>';
     setTimeout(bindForgot, 100);
 }
 
@@ -584,6 +578,24 @@ window.renderLogin = renderLogin;
 window.renderSignup = renderSignup;
 window.renderForgot = renderForgot;
 window.showNotification = showNotification;
+window.checkAuth = checkAuth;
+window.loginWithGoogleManual = window.loginWithGoogleManual;
+window.handleGoogle = handleGoogle;
+window.createUser = createUser;
+window.toggleMobileMenu = toggleMobileMenu;
+
+/* ═══════════════════════════════════════════
+   CHECK AUTH — Redirect only if logged in
+   ═══════════════════════════════════════════ */
+function checkAuth(route) {
+    if (!isAuthenticated) {
+        showNotification('Please sign in to access this feature', 'warning');
+        setTimeout(function() { openAuthModal('login'); }, 900);
+        return false;
+    }
+    showNotification('Loading...', 'info');
+    setTimeout(function() { window.location.href = route; }, 800);
+}
 
 /* ═══════════════════════════════════════════
    INIT

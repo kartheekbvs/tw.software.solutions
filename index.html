@@ -37,13 +37,13 @@
 
         <nav class="nav-menu">
             <a href="index.html" class="h-target">Home</a>
-            <a href="courses.html" class="h-target">Courses</a>
             <div class="dropdown">
                 <button class="dropbtn h-target">Services <i class="fas fa-chevron-down" style="font-size:0.55rem;margin-left:4px;"></i></button>
                 <div class="dropdown-content">
-                    <a href="courses.html">Courses</a>
+                    <a href="#" onclick="checkAuth('courses.html');return false;">Courses</a>
+                    <a href="#" onclick="checkAuth('training.html');return false;">Training</a>
+                    <a href="#" onclick="checkAuth('exam.html');return false;">Attend Exam</a>
                     <a href="dashboard.html">Dashboard</a>
-                    <a href="about.html">About</a>
                 </div>
             </div>
             <a href="about.html" class="h-target">About</a>
@@ -231,24 +231,24 @@
             <p class="section-sub">Comprehensive solutions for all your technical education needs — from structured learning to certified examinations.</p>
         </div>
         <div class="services-grid">
-            <a href="courses.html" class="s-card reveal">
-                <div class="s-icon-wrap"><i class="fas fa-graduation-cap s-icon"></i></div>
-                <h3 class="s-title">Premium Courses</h3>
-                <p class="s-desc">Comprehensive learning resources with structured modules, hands-on projects, and industry-standard curriculum in AI, Python, Azure, and more.</p>
+            <div class="s-card reveal" onclick="checkAuth('training.html')">
+                <div class="s-icon-wrap"><i class="fas fa-book s-icon"></i></div>
+                <h3 class="s-title">Training</h3>
+                <p class="s-desc">Comprehensive learning resources with structured modules, hands-on projects, and industry-standard curriculum in ML, Databases, C, Python, and more.</p>
                 <span class="s-arrow">Explore <i class="fas fa-arrow-right"></i></span>
-            </a>
-            <a href="dashboard.html" class="s-card reveal" style="transition-delay:0.1s">
+            </div>
+            <div class="s-card reveal" style="transition-delay:0.1s" onclick="checkAuth('exam.html')">
                 <div class="s-icon-wrap"><i class="fas fa-clipboard-check s-icon"></i></div>
                 <h3 class="s-title">Attend Exam</h3>
                 <p class="s-desc">Test your knowledge with professionally designed examinations and receive detailed performance feedback and certification.</p>
                 <span class="s-arrow">Explore <i class="fas fa-arrow-right"></i></span>
-            </a>
-            <a href="about.html" class="s-card reveal" style="transition-delay:0.2s">
-                <div class="s-icon-wrap"><i class="fas fa-chart-line s-icon"></i></div>
-                <h3 class="s-title">Dashboard</h3>
-                <p class="s-desc">Track your progress, access purchased content, and manage your learning journey from a centralized personal dashboard.</p>
+            </div>
+            <div class="s-card reveal" style="transition-delay:0.2s" onclick="location.href='about.html'">
+                <div class="s-icon-wrap"><i class="fas fa-info-circle s-icon"></i></div>
+                <h3 class="s-title">About TWSS</h3>
+                <p class="s-desc">Learn about our mission, vision, team, and what drives us to deliver exceptional technical education globally.</p>
                 <span class="s-arrow">Explore <i class="fas fa-arrow-right"></i></span>
-            </a>
+            </div>
         </div>
     </div>
 </section>
@@ -281,9 +281,9 @@
             </div>
             <div class="footer-col">
                 <h4>Services</h4>
-                <a href="courses.html">Courses</a>
-                <a href="dashboard.html">Dashboard</a>
-                <a href="about.html">About Us</a>
+                <a href="#" onclick="checkAuth('courses.html');return false;">Courses</a>
+                <a href="#" onclick="checkAuth('training.html');return false;">Training</a>
+                <a href="#" onclick="checkAuth('exam.html');return false;">Attend Exam</a>
             </div>
             <div class="footer-col">
                 <h4>Company</h4>
@@ -321,7 +321,9 @@
     </div>
     <div class="mobile-nav-links">
         <a href="index.html">Home</a>
-        <a href="courses.html">Courses</a>
+        <a href="#" onclick="checkAuth('courses.html');return false;">Courses</a>
+        <a href="#" onclick="checkAuth('training.html');return false;">Training</a>
+        <a href="#" onclick="checkAuth('exam.html');return false;">Attend Exam</a>
         <a href="dashboard.html">Dashboard</a>
         <a href="about.html">About</a>
         <a href="contact.html">Contact</a>

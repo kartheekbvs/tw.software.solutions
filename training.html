@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TWSS — Technical Work for Software & Solutions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --black: #0a0a0a;
+            --white: #f5f5f0;
+            --gray-1: #1a1a1a;
+            --gray-2: #2a2a2a;
+            --gray-3: #3a3a3a;
+            --gray-4: #888;
+            --gray-5: #bbb;
+            --accent: #e8e8e0;
+            --line: rgba(255,255,255,0.08);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--black);
+            color: var(--white);
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* Custom cursor */
+        .cursor {
+            width: 10px; height: 10px;
+            background: var(--white);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.1s ease, opacity 0.2s;
+            mix-blend-mode: difference;
+        }
+        .cursor-ring {
+            width: 36px; height: 36px;
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9998;
+            transition: transform 0.15s ease, width 0.2s, height 0.2s, opacity 0.2s;
+            mix-blend-mode: difference;
+        }
+
+        /* Noise overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9000;
+            opacity: 0.4;
+        }
+
+        /* ─── LOADER ─── */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: var(--black);
+            z-index: 8000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+            transition: opacity 0.6s ease, visibility 0.6s;
+        }
+        #loader.hidden { opacity: 0; visibility: hidden; }
+        .loader-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(3rem, 10vw, 8rem);
+            letter-spacing: 0.15em;
+            overflow: hidden;
+        }
+        .loader-text span {
+            display: inline-block;
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .loader-text span:nth-child(1) { animation-delay: 0.1s; }
+        .loader-text span:nth-child(2) { animation-delay: 0.2s; }
+        .loader-text span:nth-child(3) { animation-delay: 0.3s; }
+        .loader-text span:nth-child(4) { animation-delay: 0.4s; }
+        .loader-bar {
+            width: 200px; height: 1px;
+            background: var(--gray-2);
+            overflow: hidden;
+        }
+        .loader-bar-fill {
+            height: 100%;
+            background: var(--white);
+            width: 0;
+            animation: loadFill 1.8s ease forwards;
+        }
+        @keyframes loadFill { to { width: 100%; } }
+        @keyframes slideUp {
+            from { transform: translateY(120%); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+
+        /* ─── HEADER / NAV ─── */
+        .nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 500;
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s, backdrop-filter 0.3s, background 0.3s;
+        }
+        .nav.scrolled {
+            border-color: var(--line);
+            backdrop-filter: blur(20px);
+            background: rgba(10,10,10,0.85);
+        }
+        .nav-logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8rem;
+            letter-spacing: 0.1em;
+            color: var(--white);
+            text-decoration: none;
+        }
+        .nav-links { display: flex; gap: 32px; list-style: none; }
+        .nav-links a {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--gray-4);
+            text-decoration: none;
+            transition: color 0.2s;
+            position: relative;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -3px; left: 0;
+            width: 0; height: 1px;
+            background: var(--white);
+            transition: width 0.3s ease;
+        }
+        .nav-links a:hover { color: var(--white); }
+        .nav-links a:hover::after { width: 100%; }
+
+        /* ─── HERO ─── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 0 40px 80px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 60% 40%, rgba(255,255,255,0.04) 0%, transparent 70%);
+        }
+        .hero-grid {
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(var(--line) 1px, transparent 1px),
+                              linear-gradient(90deg, var(--line) 1px, transparent 1px);
+            background-size: 80px 80px;
+            animation: gridPan 20s linear infinite;
+        }
+        @keyframes gridPan {
+            from { background-position: 0 0; }
+            to   { background-position: 80px 80px; }
+        }
+        .hero-counter {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            color: var(--gray-4);
+            margin-bottom: 24px;
+            animation: fadeIn 1s 2s both;
+        }
+        .hero-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(5rem, 16vw, 16rem);
+            line-height: 0.9;
+            letter-spacing: -0.02em;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-title .line {
+            display: block;
+            overflow: hidden;
+        }
+        .hero-title .line span {
+            display: block;
+            animation: slideUp 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .hero-title .line:nth-child(1) span { animation-delay: 1.8s; }
+        .hero-title .line:nth-child(2) span { animation-delay: 1.95s; color: transparent; -webkit-text-stroke: 1px var(--gray-3); }
+        .hero-title .line:nth-child(3) span { animation-delay: 2.1s; }
+        .hero-subtitle {
+            font-family: 'DM Sans', sans-serif;
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            color: var(--gray-4);
+            max-width: 400px;
+            line-height: 1.7;
+            animation: fadeIn 1s 2.3s both;
+        }
+        .hero-scroll {
+            position: absolute;
+            bottom: 40px; right: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            animation: fadeIn 1s 2.5s both;
+        }
+        .hero-scroll span {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.2em;
+            color: var(--gray-4);
+            writing-mode: vertical-rl;
+        }
+        .hero-scroll-line {
+            width: 1px; height: 60px;
+            background: var(--gray-3);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-scroll-line::after {
+            content: '';
+            position: absolute;
+            top: -100%; left: 0;
+            width: 100%; height: 100%;
+            background: var(--white);
+            animation: scrollLine 1.5s ease infinite;
+        }
+        @keyframes scrollLine {
+            from { top: -100%; }
+            to   { top: 100%; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ─── STATS ─── */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            border-top: 1px solid var(--line);
+        }
+        .stat {
+            padding: 50px 40px;
+            border-right: 1px solid var(--line);
+            position: relative;
+            overflow: hidden;
+            transition: background 0.4s;
+        }
+        .stat:last-child { border-right: none; }
+        .stat:hover { background: var(--gray-1); }
+        .stat-num {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(3rem, 6vw, 5rem);
+            letter-spacing: 0.05em;
+            color: var(--white);
+            display: block;
+            line-height: 1;
+        }
+        .stat-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            color: var(--gray-4);
+            text-transform: uppercase;
+            margin-top: 8px;
+        }
+
+        /* ─── SECTIONS ─── */
+        .section {
+            padding: 100px 40px;
+            border-top: 1px solid var(--line);
+            position: relative;
+        }
+        .section-header {
+            display: flex;
+            align-items: baseline;
+            gap: 24px;
+            margin-bottom: 60px;
+        }
+        .section-index {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--gray-4);
+            letter-spacing: 0.1em;
+        }
+        .section-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 5rem);
+            letter-spacing: 0.05em;
+            line-height: 1;
+        }
+        .section-line {
+            flex: 1;
+            height: 1px;
+            background: var(--line);
+        }
+        .section-desc {
+            max-width: 500px;
+            color: var(--gray-4);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            margin-bottom: 60px;
+        }
+
+        /* ─── COURSE CARDS ─── */
+        .course-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1px;
+            background: var(--line);
+            border: 1px solid var(--line);
+        }
+        .card {
+            background: var(--black);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            transition: background 0.4s;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--white);
+            transform: translateY(100%);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 0;
+        }
+        .card:hover::before { transform: translateY(0); }
+        .card:hover { color: var(--black); }
+        .card:hover .card-icon,
+        .card:hover .card-title,
+        .card:hover .card-desc,
+        .card:hover .card-tags,
+        .card:hover .card-badge,
+        .card:hover .card-link { color: var(--black); }
+        .card:hover .card-badge { background: var(--black); color: var(--white); }
+        .card:hover .card-tag { border-color: rgba(0,0,0,0.2); color: var(--black); }
+        .card:hover .card-link { border-color: var(--black); }
+        .card > * { position: relative; z-index: 1; }
+
+        .card-badge {
+            display: inline-block;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border: 1px solid var(--gray-3);
+            color: var(--gray-4);
+            width: fit-content;
+            transition: all 0.3s;
+        }
+        .card-icon {
+            font-size: 2rem;
+            color: var(--gray-3);
+            transition: color 0.3s;
+        }
+        .card-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8rem;
+            letter-spacing: 0.05em;
+            line-height: 1.1;
+            transition: color 0.3s;
+        }
+        .card-desc {
+            font-size: 0.85rem;
+            line-height: 1.7;
+            color: var(--gray-4);
+            flex: 1;
+            transition: color 0.3s;
+        }
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .card-tag {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6rem;
+            padding: 3px 8px;
+            border: 1px solid var(--gray-2);
+            color: var(--gray-4);
+            letter-spacing: 0.1em;
+            transition: all 0.3s;
+        }
+        .card-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--white);
+            text-decoration: none;
+            border-bottom: 1px solid var(--gray-3);
+            padding-bottom: 4px;
+            transition: all 0.3s;
+            width: fit-content;
+        }
+        .card-link i { font-size: 0.65rem; transition: transform 0.3s; }
+        .card-link:hover i { transform: translateX(4px); }
+
+        /* ─── MARQUEE ─── */
+        .marquee-wrap {
+            overflow: hidden;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+            padding: 20px 0;
+            background: var(--gray-1);
+        }
+        .marquee {
+            display: flex;
+            gap: 60px;
+            animation: marquee 20s linear infinite;
+            white-space: nowrap;
+        }
+        .marquee-item {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 0.2em;
+            color: var(--gray-4);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-shrink: 0;
+        }
+        .marquee-item::after {
+            content: '—';
+            color: var(--gray-3);
+        }
+        @keyframes marquee {
+            from { transform: translateX(0); }
+            to   { transform: translateX(-50%); }
+        }
+
+        /* ─── FOOTER ─── */
+        footer {
+            padding: 60px 40px;
+            border-top: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .footer-logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            letter-spacing: 0.1em;
+        }
+        .footer-copy {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--gray-4);
+            letter-spacing: 0.1em;
+        }
+        .footer-link {
+            color: var(--white);
+            text-decoration: none;
+            border-bottom: 1px solid var(--gray-3);
+            transition: border-color 0.2s;
+        }
+        .footer-link:hover { border-color: var(--white); }
+
+        /* ─── REVEAL ANIMATION ─── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ─── MOBILE ─── */
+        @media (max-width: 768px) {
+            .nav { padding: 16px 20px; }
+            .nav-links { display: none; }
+            .hero { padding: 0 20px 60px; }
+            .hero-scroll { display: none; }
+            .stats { grid-template-columns: 1fr; }
+            .stat { border-right: none; border-bottom: 1px solid var(--line); }
+            .section { padding: 60px 20px; }
+            .course-grid { grid-template-columns: 1fr; }
+            footer { padding: 40px 20px; flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="loader">
+    <div class="loader-text">
+        <span>T</span><span>W</span><span>S</span><span>S</span>
+    </div>
+    <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+</div>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+    <a href="#" class="nav-logo">TWSS</a>
+    <ul class="nav-links">
+        <li><a href="#ml">Machine Learning</a></li>
+        <li><a href="#dbms">Databases</a></li>
+        <li><a href="#c">C / Python</a></li>
+        <li><a href="#cpp">C++ / DSA</a></li>
+    </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    <div class="hero-counter">01 / TECHNICAL EDUCATION PLATFORM</div>
+    <h1 class="hero-title">
+        <span class="line"><span>TECHNICAL</span></span>
+        <span class="line"><span>WORK &amp;</span></span>
+        <span class="line"><span>SOLUTIONS</span></span>
+    </h1>
+    <p class="hero-subtitle">Master programming, AI, and data systems through carefully crafted learning modules built for the modern engineer.</p>
+    <div class="hero-scroll">
+        <div class="hero-scroll-line"></div>
+        <span>SCROLL</span>
+    </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+    <div class="stat reveal">
+        <span class="stat-num" data-target="4">0</span>
+        <p class="stat-label">Core Technologies</p>
+    </div>
+    <div class="stat reveal" style="transition-delay:0.1s">
+        <span class="stat-num" data-target="50">0</span>
+        <p class="stat-label">Learning Modules</p>
+    </div>
+    <div class="stat reveal" style="transition-delay:0.2s">
+        <span class="stat-num" data-target="100">0</span>
+        <p class="stat-label">% Hands-on Projects</p>
+    </div>
+</div>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+    <div class="marquee">
+        <span class="marquee-item">MACHINE LEARNING</span>
+        <span class="marquee-item">DEEP LEARNING</span>
+        <span class="marquee-item">DATABASES</span>
+        <span class="marquee-item">PYTHON</span>
+        <span class="marquee-item">C PROGRAMMING</span>
+        <span class="marquee-item">C++ &amp; OOP</span>
+        <span class="marquee-item">DATA STRUCTURES</span>
+        <span class="marquee-item">ALGORITHMS</span>
+        <span class="marquee-item">AZURE CLOUD</span>
+        <span class="marquee-item">MACHINE LEARNING</span>
+        <span class="marquee-item">DEEP LEARNING</span>
+        <span class="marquee-item">DATABASES</span>
+        <span class="marquee-item">PYTHON</span>
+        <span class="marquee-item">C PROGRAMMING</span>
+        <span class="marquee-item">C++ &amp; OOP</span>
+        <span class="marquee-item">DATA STRUCTURES</span>
+        <span class="marquee-item">ALGORITHMS</span>
+        <span class="marquee-item">AZURE CLOUD</span>
+    </div>
+</div>
+
+<!-- ML SECTION -->
+<section class="section" id="ml">
+    <div class="section-header reveal">
+        <span class="section-index">01</span>
+        <h2 class="section-title">Machine Learning</h2>
+        <div class="section-line"></div>
+    </div>
+    <p class="section-desc reveal">Advanced AI algorithms, data science methodologies, and neural network architectures for real-world applications.</p>
+    <div class="course-grid">
+        <div class="card reveal">
+            <span class="card-badge">Advanced Level</span>
+            <i class="fas fa-brain card-icon"></i>
+            <h3 class="card-title">ML Fundamentals</h3>
+            <p class="card-desc">Supervised and unsupervised learning algorithms covering regression, classification, clustering, and dimensionality reduction.</p>
+            <div class="card-tags">
+                <span class="card-tag">Python</span>
+                <span class="card-tag">Scikit-learn</span>
+                <span class="card-tag">Pandas</span>
+                <span class="card-tag">NumPy</span>
+            </div>
+            <a href="https://ml-engineering-hub.pages.dev" class="card-link">Start Learning <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="card reveal" style="transition-delay:0.1s">
+            <span class="card-badge">Expert Level</span>
+            <i class="fas fa-network-wired card-icon"></i>
+            <h3 class="card-title">Deep Learning & Neural Networks</h3>
+            <p class="card-desc">CNNs, RNNs, and transformers. Practical experience with TensorFlow and PyTorch for computer vision and NLP.</p>
+            <div class="card-tags">
+                <span class="card-tag">TensorFlow</span>
+                <span class="card-tag">PyTorch</span>
+                <span class="card-tag">Computer Vision</span>
+                <span class="card-tag">NLP</span>
+            </div>
+            <a href="https://kartheekbvs.github.io/gow/index.html" class="card-link">Start Learning <i class="fas fa-arrow-right"></i></a>
+        </div>
+    </div>
+</section>
+
+<!-- DBMS SECTION -->
+<section class="section" id="dbms">
+    <div class="section-header reveal">
+        <span class="section-index">02</span>
+        <h2 class="section-title">Databases</h2>
+        <div class="section-line"></div>
+    </div>
+    <p class="section-desc reveal">SQL, NoSQL, and big data systems — from relational design principles to distributed database architectures.</p>
+    <div class="course-grid">
+        <div class="card reveal">
+            <span class="card-badge">Foundation</span>
+            <i class="fas fa-database card-icon"></i>
+            <h3 class="card-title">SQL & Relational Databases</h3>
+            <p class="card-desc">Database design principles, normalization, complex SQL queries, and management with MySQL and PostgreSQL.</p>
+            <div class="card-tags">
+                <span class="card-tag">SQL</span>
+                <span class="card-tag">MySQL</span>
+                <span class="card-tag">PostgreSQL</span>
+                <span class="card-tag">DB Design</span>
+            </div>
+            <a href="/dbms.html" class="card-link">Start Learning <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="card reveal" style="transition-delay:0.1s">
+            <span class="card-badge">Advanced</span>
+            <i class="fas fa-server card-icon"></i>
+            <h3 class="card-title">NoSQL & Big Data</h3>
+            <p class="card-desc">Distributed data systems, document stores, and big data processing with MongoDB, Redis, and Cassandra.</p>
+            <div class="card-tags">
+                <span class="card-tag">MongoDB</span>
+                <span class="card-tag">Redis</span>
+                <span class="card-tag">Cassandra</span>
+                <span class="card-tag">Big Data</span>
+            </div>
+            <a href="/dbms1.html" class="card-link">Start Learning <i class="fas fa-arrow-right"></i></a>
+        </div>
+    </div>
+</section>
+
+<!-- C / PYTHON SECTION -->
+<section class="section" id="c">
+    <div class="section-header reveal">
+        <span class="section-index">03</span>
+        <h2 class="section-title">C & Python</h2>
+        <div class="section-line"></div>
+    </div>
+    <p class="section-desc reveal">Systems programming with C and versatile scripting with Python — from memory management to cloud deployment.</p>
+    <div class="course-grid">
+        <div class="card reveal">
+            <span class="card-badge">Foundation</span>
+            <i class="fab fa-python card-icon"></i>
+            <h3 class="card-title">Python Programming</h3>
+            <p class="card-desc">Complete Python coverage: syntax, control flow, functions, data structures, and scripting for real-world automation.</p>
+            <div class="card-tags">
+                <span class="card-tag">Syntax</span>
+                <span class="card-tag">Functions</span>
+                <span class="card-tag">Arrays</span>
+                <span class="card-tag">Strings</span>
+            </div>
+            <a href="pythontut.html" class="card-link">Start Learning <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="card reveal" style="transition-delay:0.1s">
+            <span class="card-badge">Foundation</span>
+            <i class="fab fa-microsoft card-icon"></i>
+            <h3 class="card-title">Azure Cloud</h3>
+            <p class="card-desc">Microsoft Azure cloud platform — services, deployment pipelines, scaling strategies, and infrastructure management.</p>
+            <div class="card-tags">
+                <span class="card-tag">Cloud</span>
+                <span class="card-tag">Azure Services</span>
+                <span class="card-tag">Deployment</span>
+            </div>
+            <a href="/Azure.html" class="card-link">Start Learning <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="card reveal" style="transition-delay:0.2s">
+            <span class="card-badge">Advanced</span>
+            <i class="fas fa-microchip card-icon"></i>
+            <h3 class="card-title">Advanced C & Systems</h3>
+            <p class="card-desc">Pointers, memory management, file I/O, and system-level programming — the foundation of modern software.</p>
+            <div class="card-tags">
+                <span class="card-tag">Pointers</span>
+                <span class="card-tag">Memory Mgmt</span>
+                <span class="card-tag">File I/O</span>
+                <span class="card-tag">System Calls</span>
+            </div>
+            <a href="/c.html" class="card-link">Start Learning <i class="fas fa-arrow-right"></i></a>
+        </div>
+    </div>
+</section>
+
+<!-- C++ SECTION -->
+<section class="section" id="cpp">
+    <div class="section-header reveal">
+        <span class="section-index">04</span>
+        <h2 class="section-title">C++ & DSA</h2>
+        <div class="section-line"></div>
+    </div>
+    <p class="section-desc reveal">Object-oriented design, modern C++ standards, and algorithmic problem-solving with data structures.</p>
+    <div class="course-grid">
+        <div class="card reveal">
+            <span class="card-badge">Intermediate</span>
+            <i class="fas fa-cube card-icon"></i>
+            <h3 class="card-title">OOP with C++</h3>
+            <p class="card-desc">Classes, inheritance, polymorphism, and encapsulation — enterprise-grade OOP design patterns with practical applications.</p>
+            <div class="card-tags">
+                <span class="card-tag">OOP</span>
+                <span class="card-tag">Classes</span>
+                <span class="card-tag">Inheritance</span>
+                <span class="card-tag">Polymorphism</span>
+            </div>
+            <a href="/cpp.html" class="card-link">Start Learning <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="card reveal" style="transition-delay:0.1s">
+            <span class="card-badge">Advanced</span>
+            <i class="fas fa-sitemap card-icon"></i>
+            <h3 class="card-title">Data Structures & Algorithms</h3>
+            <p class="card-desc">Templates, STL containers, sorting algorithms, and modern C++11/14/17/20 standards for competitive programming.</p>
+            <div class="card-tags">
+                <span class="card-tag">Templates</span>
+                <span class="card-tag">STL</span>
+                <span class="card-tag">Algorithms</span>
+                <span class="card-tag">Pointers</span>
+            </div>
+            <a href="https://twssdsa.pages.dev/" class="card-link">Start Learning <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="card reveal" style="transition-delay:0.1s">
+            <span class="card-badge">Advanced</span>
+            <i class="fas fa-sitemap card-icon"></i>
+            <h3 class="card-title">Operating Systems</h3>
+            <p class="card-desc">A: Foundations B: Processes C: Synchronization D: Memory E: Storage F: Security</p>
+            <div class="card-tags">
+                <span class="card-tag">Foundations</span>
+                <span class="card-tag">Processes</span>
+                <span class="card-tag">Synchronization</span>
+                <span class="card-tag">Memory</span>
+            </div>
+            <a href="https://os-145.pages.dev/" class="card-link">Start Learning <i class="fas fa-arrow-right"></i></a>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <div class="footer-logo">TWSS</div>
+    <p class="footer-copy">
+        Technical Work for Software &amp; Solutions<br>
+        <a href="https://twss.netlify.app" class="footer-link">twss.netlify.app</a>
+    </p>
+    <p class="footer-copy">Building technical excellence<br>through practical education.</p>
+</footer>
+
+<script>
+    // Loader
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            document.getElementById('loader').classList.add('hidden');
+        }, 2000);
+    });
+
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+
+    document.addEventListener('mousemove', e => {
+        mx = e.clientX; my = e.clientY;
+        cursor.style.left = mx - 5 + 'px';
+        cursor.style.top  = my - 5 + 'px';
+    });
+
+    function animateRing() {
+        rx += (mx - rx - 18) * 0.12;
+        ry += (my - ry - 18) * 0.12;
+        ring.style.left = rx + 'px';
+        ring.style.top  = ry + 'px';
+        requestAnimationFrame(animateRing);
+    }
+    animateRing();
+
+    document.querySelectorAll('a, button').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+            cursor.style.transform = 'scale(2.5)';
+            ring.style.width = '60px';
+            ring.style.height = '60px';
+        });
+        el.addEventListener('mouseleave', () => {
+            cursor.style.transform = 'scale(1)';
+            ring.style.width = '36px';
+            ring.style.height = '36px';
+        });
+    });
+
+    // Nav scroll effect
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+        nav.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // Intersection observer for reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) e.target.classList.add('visible');
+        });
+    }, { threshold: 0.1 });
+    reveals.forEach(el => observer.observe(el));
+
+    // Counter animation
+    function animateCounter(el, target) {
+        let start = 0;
+        const duration = 1800;
+        const step = timestamp => {
+            if (!start) start = timestamp;
+            const progress = Math.min((timestamp - start) / duration, 1);
+            const ease = 1 - Math.pow(1 - progress, 3);
+            el.textContent = Math.floor(ease * target) + (target === 100 ? '' : '+');
+            if (progress < 1) requestAnimationFrame(step);
+            else el.textContent = target + (target === 100 ? '%' : '+');
+        };
+        requestAnimationFrame(step);
+    }
+
+    const statNums = document.querySelectorAll('.stat-num');
+    const statObserver = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                const target = parseInt(e.target.dataset.target);
+                animateCounter(e.target, target);
+                statObserver.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.5 });
+    statNums.forEach(el => statObserver.observe(el));
+
+    // Course engagement (localStorage)
+    let courseData = JSON.parse(localStorage.getItem('twssCourseData') || '{}');
+    document.querySelectorAll('.card-link').forEach(link => {
+        link.addEventListener('click', () => {
+            const id = link.closest('.card').querySelector('.card-title').textContent;
+            if (!courseData[id]) courseData[id] = { clicks: 0 };
+            courseData[id].clicks++;
+            localStorage.setItem('twssCourseData', JSON.stringify(courseData));
+        });
+    });
+
+    // Disable right-click and dev shortcuts (preserving UX)
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+        if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J'].includes(e.key)) || (e.ctrlKey && e.key === 'U')) {
+            e.preventDefault();
+        }
+    });
+</script>
+</body>
+</html>
