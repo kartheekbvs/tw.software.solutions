@@ -702,9 +702,13 @@ body::after {
 .auth-box p { font-size:0.82rem; color:var(--mid); text-align:center; margin-top:18px; }
 .auth-box p a { color:var(--ink); text-decoration:none; border-bottom:1px solid var(--faint); transition:border-color 0.2s; cursor:none; }
 .auth-box p a:hover { border-color:var(--ink); }
-.auth-status { margin-top:12px; padding:10px 14px; border-radius:2px; font-size:0.82rem; }
-.auth-status.success { background:#f0faf4; color:#1a7a3f; border:1px solid #c5e8d2; }
-.auth-status.error   { background:#fef2f2; color:#9a1212; border:1px solid #fdd; }
+.auth-status { margin-top:12px; padding:10px 14px; border-radius:2px; font-size:0.82rem; display:none; }
+.auth-status.success { background:#f0faf4; color:#1a7a3f; border:1px solid #c5e8d2; display:block; }
+.auth-status.error   { background:#fef2f2; color:#9a1212; border:1px solid #fdd; display:block; }
+.auth-status.info    { background:#f5f5ff; color:#3a3a8a; border:1px solid #ddddf8; display:block; }
+.otp-status.success { color:#1a7a3f; }
+.otp-status.error   { color:#9a1212; }
+#googleSignInButton { display:flex; justify-content:center; }
 
 /* ── MOBILE NAV ── */
 .mobile-nav {
@@ -780,6 +784,8 @@ body::after {
 }
 .notif.success { background:#f0faf4; color:#1a7a3f; border:1px solid #c5e8d2; }
 .notif.error   { background:#fef2f2; color:#9a1212; border:1px solid #fdd; }
+.notif.warning { background:#fffbf0; color:#7a5a00; border:1px solid #f0e0a0; }
+.notif.info    { background:#f5f8ff; color:#1a3a7a; border:1px solid #c0d0f0; }
 
 /* ── MODAL BASE ── */
 .modal {

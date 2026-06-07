@@ -283,12 +283,40 @@ window.mockLogin = function() {
         return;
     }
 
-    currentUser = { email: email, name: email.split('@')[0] };
-    localStorage.setItem('twss_user', JSON.stringify(currentUser));
-    closeModal('authModal');
-    openModal('cartModal');
-    showCheckoutForm();
-    if (typeof updateProfileUI === 'function') updateProfileUI();
+    // Check users_login table for authentication
+    (async () => {
+        try {
+            const { data, error } = await supabase.from('users_login').select('*').eq('email', email).maybeSingle();
+            if (data && !error) {
+                currentUser = { email: data.email, name: data.name || email.split('@')[0], picture: data.picture };
+                localStorage.setItem("loggedIn", "true");
+                localStorage.setItem("userEmail", email);
+                localStorage.setItem('twss_user', JSON.stringify(currentUser));
+                closeModal('authModal');
+                openModal('cartModal');
+                showCheckoutForm();
+                if (typeof updateProfileUI === 'function') updateProfileUI();
+            } else {
+                // User not found — create a basic entry or prompt signup
+                currentUser = { email: email, name: email.split('@')[0] };
+                localStorage.setItem("loggedIn", "true");
+                localStorage.setItem("userEmail", email);
+                localStorage.setItem('twss_user', JSON.stringify(currentUser));
+                closeModal('authModal');
+                openModal('cartModal');
+                showCheckoutForm();
+                if (typeof updateProfileUI === 'function') updateProfileUI();
+            }
+        } catch (e) {
+            // Fallback: just use email
+            currentUser = { email: email, name: email.split('@')[0] };
+            localStorage.setItem('twss_user', JSON.stringify(currentUser));
+            closeModal('authModal');
+            openModal('cartModal');
+            showCheckoutForm();
+            if (typeof updateProfileUI === 'function') updateProfileUI();
+        }
+    })();
 };
 
 // ── REAL-TIME SUBSCRIPTION ──
@@ -377,7 +405,15 @@ document.addEventListener('keydown', (e) => {
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', () => {
+    // Check new auth system first
+    const loggedIn = localStorage.getItem("loggedIn");
+    const userEmail = localStorage.getItem("userEmail");
     const user = JSON.parse(localStorage.getItem('twss_user') || 'null');
-    if (user && user.email) currentUser = user;
+
+    if (loggedIn === "true" && userEmail) {
+        currentUser = user || { email: userEmail, name: userEmail.split('@')[0] };
+    } else if (user && user.email) {
+        currentUser = user;
+    }
     initRealtime();
 });

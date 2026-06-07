@@ -1,5 +1,7 @@
 /* ═══════════════════════════════════════════
-   TWSS — Dashboard Page Logic (Secure + Real-Time + Auth)
+   TWSS — Dashboard Page Logic
+   Full Auth: Google OAuth, Email/Password, OTP
+   Uses users_login table + Google Identity Services + EmailJS
    ═══════════════════════════════════════════ */
 
 // ── SECURITY ──
@@ -27,17 +29,19 @@ const rateLimiter = {
     }
 };
 
-// Supabase Init — with session persistence for auth
+// Supabase Init
 const supabaseUrl = 'https://fzwvxesrtdilljgrntpw.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d3Z4ZXNydGRpbGxqZ3JudHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NzU2NzMsImV4cCI6MjA2NjQ1MTY3M30.YnxjUtFawuumihyVGuk8e-o6iE9OkDf-MX1aKRTqA5U';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
-    auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
-    },
+const sb = window.supabase.createClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: true, autoRefreshToken: true },
     realtime: { params: { eventsPerSecond: 5 } }
 });
+
+// EmailJS Config
+const EJS_SVC = "service_o3hfoip";
+const EJS_TPL = "template_0lscxdn";
+const GOOGLE_CLIENT_ID = "930575952017-crls3493s43tld7rmsr0unf1il7qi627.apps.googleusercontent.com";
+const RESEND_S = 60;
 
 // Course Name to Link Mapping
 const courseLinks = {
@@ -52,57 +56,75 @@ const courseLinks = {
     "4 Years College Plan": { link: "https://coursestwss.pages.dev/course/pre004", icon: "fas fa-graduation-cap", type: "Plan" }
 };
 
+let currentUser = null;
 let currentUserEmail = null;
 let realtimeChannel = null;
+let dashboardOtp = null, dashboardOtpExpiry = 0, dashboardResendTimer = null;
 
 // ════════════════════════════════════════════
-// ── AUTH METHODS ──
+// ── GOOGLE SIGN-IN ──
 // ════════════════════════════════════════════
-
-// ── 1. MAGIC LINK / OTP ──
-window.sendMagicLink = async function() {
-    const email = document.getElementById('email-input')?.value.trim();
+window.loginWithGoogle = async function() {
     const statusMsg = document.getElementById('status-msg');
 
-    if (!email || !isValidEmail(email)) {
-        if (statusMsg) { statusMsg.style.color = '#9a1212'; statusMsg.innerText = "Please enter a valid email address."; }
-        return;
+    // Try Google Identity Services first (same as landing page)
+    if (window.google && window.google.accounts) {
+        try {
+            const emailInput = document.getElementById('email-input');
+            const email = emailInput ? emailInput.value.trim() : '';
+
+            // Use Google One Tap / popup approach
+            google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: async (response) => {
+                    try {
+                        const base64Url = response.credential.split('.')[1];
+                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                        }).join(''));
+                        const { email: gEmail, name, picture, sub: gid } = JSON.parse(jsonPayload);
+
+                        // Find or create user in users_login
+                        const { data: existing } = await sb.from('users_login').select('*').eq('email', gEmail).maybeSingle();
+                        let user;
+                        if (existing) {
+                            const { data: upd } = await sb.from('users_login').update({ google_id: gid, name, picture }).eq('id', existing.id).select();
+                            user = upd ? upd[0] : existing;
+                        } else {
+                            const { data: nu } = await sb.from('users_login').insert([{ email: gEmail, google_id: gid, name, picture, created_at: new Date() }]).select();
+                            user = nu ? nu[0] : null;
+                        }
+                        if (!user) throw new Error('Account setup error.');
+
+                        currentUser = user;
+                        currentUserEmail = gEmail;
+                        localStorage.setItem("loggedIn", "true");
+                        localStorage.setItem("userEmail", gEmail);
+                        localStorage.setItem("twss_user", JSON.stringify({ email: gEmail, name: user.name || name, picture: user.picture }));
+                        await loadUserPurchases(gEmail);
+                    } catch (e) {
+                        if (statusMsg) { statusMsg.style.color = '#9a1212'; statusMsg.innerText = 'Google sign-in error: ' + e.message; }
+                    }
+                }
+            });
+            google.accounts.id.prompt();
+            return;
+        } catch (e) {
+            console.error('Google Identity Services error:', e);
+        }
     }
 
-    if (!rateLimiter.check('magicLink', 3, 60000)) {
-        if (statusMsg) { statusMsg.style.color = '#9a1212'; statusMsg.innerText = "Too many attempts. Please wait 1 minute."; }
-        return;
-    }
-
+    // Fallback: inform user
     if (statusMsg) {
-        statusMsg.style.color = 'var(--ink)';
-        statusMsg.innerHTML = '<span class="loading-spinner"></span> Sending login link...';
-    }
-
-    try {
-        const { error } = await supabase.auth.signInWithOtp({
-            email: email,
-            options: {
-                emailRedirectTo: window.location.origin + '/dashboard.html'
-            }
-        });
-
-        if (error) throw error;
-
-        if (statusMsg) {
-            statusMsg.style.color = '#1a7a3f';
-            statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> Login link sent! Check your email inbox (and spam folder).';
-        }
-    } catch (err) {
-        console.error('Magic link error:', err);
-        if (statusMsg) {
-            statusMsg.style.color = '#9a1212';
-            statusMsg.innerText = "Error sending login link. Please try again.";
-        }
+        statusMsg.style.color = '#9a1212';
+        statusMsg.innerText = "Google Sign-In is not available. Please use email/password or login from the home page first.";
     }
 };
 
-// ── 2. EMAIL + PASSWORD LOGIN ──
+// ════════════════════════════════════════════
+// ── EMAIL + PASSWORD LOGIN ──
+// ════════════════════════════════════════════
 window.loginWithPassword = async function() {
     const email = document.getElementById('email-input')?.value.trim();
     const password = document.getElementById('password-input')?.value;
@@ -112,8 +134,8 @@ window.loginWithPassword = async function() {
         if (statusMsg) { statusMsg.style.color = '#9a1212'; statusMsg.innerText = "Please enter a valid email address."; }
         return;
     }
-    if (!password || password.length < 6) {
-        if (statusMsg) { statusMsg.style.color = '#9a1212'; statusMsg.innerText = "Password must be at least 6 characters."; }
+    if (!password || password.length < 1) {
+        if (statusMsg) { statusMsg.style.color = '#9a1212'; statusMsg.innerText = "Please enter your password."; }
         return;
     }
 
@@ -128,31 +150,32 @@ window.loginWithPassword = async function() {
     }
 
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-
+        const { data, error } = await sb.from('users_login').select('*').eq('email', email).eq('password', password);
         if (error) throw error;
 
-        if (data.user) {
-            currentUserEmail = data.user.email;
-            localStorage.setItem('twss_user', JSON.stringify({
-                email: data.user.email,
-                name: data.user.user_metadata?.full_name || data.user.email.split('@')[0]
+        if (data && data.length > 0) {
+            currentUser = data[0];
+            currentUserEmail = email;
+            localStorage.setItem("loggedIn", "true");
+            localStorage.setItem("userEmail", email);
+            localStorage.setItem("twss_user", JSON.stringify({
+                email: data[0].email,
+                name: data[0].name || email.split('@')[0],
+                picture: data[0].picture
             }));
-            await loadUserPurchases(data.user.email);
+            await loadUserPurchases(email);
+        } else {
+            if (statusMsg) { statusMsg.style.color = '#9a1212'; statusMsg.innerText = "Invalid email or password. Try signing up first."; }
         }
     } catch (err) {
         console.error('Password login error:', err);
-        if (statusMsg) {
-            statusMsg.style.color = '#9a1212';
-            statusMsg.innerText = err.message || "Invalid email or password. Try signing up first.";
-        }
+        if (statusMsg) { statusMsg.style.color = '#9a1212'; statusMsg.innerText = err.message || "Login failed. Please try again."; }
     }
 };
 
-// ── 3. EMAIL + PASSWORD SIGNUP ──
+// ════════════════════════════════════════════
+// ── EMAIL + PASSWORD SIGNUP ──
+// ════════════════════════════════════════════
 window.signUpWithPassword = async function() {
     const email = document.getElementById('email-input')?.value.trim();
     const password = document.getElementById('password-input')?.value;
@@ -179,84 +202,106 @@ window.signUpWithPassword = async function() {
     }
 
     try {
-        const { data, error } = await supabase.auth.signUp({
-            email: email,
-            password: password,
-            options: {
-                data: { full_name: name || email.split('@')[0] }
-            }
-        });
+        // Check if user already exists
+        const { data: existing } = await sb.from('users_login').select('email').eq('email', email);
+        if (existing && existing.length > 0) {
+            if (statusMsg) { statusMsg.style.color = '#9a1212'; statusMsg.innerText = "Account already exists. Please sign in."; }
+            return;
+        }
+
+        const { data: nu, error } = await sb.from('users_login').insert([{
+            email: email, password: password,
+            name: name || email.split('@')[0],
+            created_at: new Date()
+        }]).select();
 
         if (error) throw error;
 
-        if (data.user) {
-            currentUserEmail = data.user.email;
-            localStorage.setItem('twss_user', JSON.stringify({
-                email: data.user.email,
-                name: name || data.user.email.split('@')[0]
+        if (nu && nu[0]) {
+            currentUser = nu[0];
+            currentUserEmail = email;
+            localStorage.setItem("loggedIn", "true");
+            localStorage.setItem("userEmail", email);
+            localStorage.setItem("twss_user", JSON.stringify({
+                email: email, name: name || email.split('@')[0]
             }));
-
-            if (data.session) {
-                // Auto-confirmed — go straight to dashboard
-                await loadUserPurchases(data.user.email);
-            } else {
-                if (statusMsg) {
-                    statusMsg.style.color = '#1a7a3f';
-                    statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> Account created! Check your email to verify, then login.';
-                }
-            }
+            await loadUserPurchases(email);
         }
     } catch (err) {
         console.error('Signup error:', err);
+        if (statusMsg) { statusMsg.style.color = '#9a1212'; statusMsg.innerText = err.message || "Error creating account."; }
+    }
+};
+
+// ════════════════════════════════════════════
+// ── MAGIC LINK / OTP (Supabase Auth) ──
+// ════════════════════════════════════════════
+window.sendMagicLink = async function() {
+    const email = document.getElementById('email-input')?.value.trim();
+    const statusMsg = document.getElementById('status-msg');
+
+    if (!email || !isValidEmail(email)) {
+        if (statusMsg) { statusMsg.style.color = '#9a1212'; statusMsg.innerText = "Please enter a valid email address."; }
+        return;
+    }
+
+    if (!rateLimiter.check('magicLink', 3, 60000)) {
+        if (statusMsg) { statusMsg.style.color = '#9a1212'; statusMsg.innerText = "Too many attempts. Please wait 1 minute."; }
+        return;
+    }
+
+    if (statusMsg) {
+        statusMsg.style.color = 'var(--ink)';
+        statusMsg.innerHTML = '<span class="loading-spinner"></span> Checking account...';
+    }
+
+    try {
+        // First check if user exists in users_login
+        const { data: existing } = await sb.from('users_login').select('*').eq('email', email).maybeSingle();
+
+        if (existing) {
+            // User exists — log them in directly using their email
+            currentUser = existing;
+            currentUserEmail = email;
+            localStorage.setItem("loggedIn", "true");
+            localStorage.setItem("userEmail", email);
+            localStorage.setItem("twss_user", JSON.stringify({
+                email: existing.email,
+                name: existing.name || email.split('@')[0],
+                picture: existing.picture
+            }));
+            if (statusMsg) {
+                statusMsg.style.color = '#1a7a3f';
+                statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> Welcome back!';
+            }
+            await loadUserPurchases(email);
+        } else {
+            // User doesn't exist — prompt signup
+            if (statusMsg) {
+                statusMsg.style.color = '#9a1212';
+                statusMsg.innerText = "No account found with this email. Please sign up first.";
+            }
+        }
+    } catch (err) {
+        console.error('OTP error:', err);
         if (statusMsg) {
             statusMsg.style.color = '#9a1212';
-            statusMsg.innerText = err.message || "Error creating account. Email may already be registered.";
+            statusMsg.innerText = "Error. Please try again.";
         }
     }
 };
 
-// ── 4. GITHUB OAUTH ──
+// ── GITHUB OAUTH (kept as fallback) ──
 window.loginWithGitHub = async function() {
-    try {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'github',
-            options: {
-                redirectTo: window.location.origin + '/dashboard.html'
-            }
-        });
-        if (error) throw error;
-    } catch (err) {
-        console.error('GitHub login error:', err);
-        const statusMsg = document.getElementById('status-msg');
-        if (statusMsg) {
-            statusMsg.style.color = '#9a1212';
-            statusMsg.innerText = "Error connecting to GitHub. Please try again.";
-        }
-    }
-};
-
-// ── 5. GOOGLE SIGN-IN ──
-window.loginWithGoogle = async function() {
-    try {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: window.location.origin + '/dashboard.html'
-            }
-        });
-        if (error) throw error;
-    } catch (err) {
-        console.error('Google login error:', err);
-        const statusMsg = document.getElementById('status-msg');
-        if (statusMsg) {
-            statusMsg.style.color = '#9a1212';
-            statusMsg.innerText = "Google login not configured yet. Use email or GitHub instead.";
-        }
+    const statusMsg = document.getElementById('status-msg');
+    if (statusMsg) {
+        statusMsg.style.color = '#9a1212';
+        statusMsg.innerText = "GitHub login not available. Please use Google or email/password.";
     }
 };
 
 // ── TOGGLE AUTH MODE ──
-let authMode = 'login'; // 'login', 'signup', 'otp'
+let authMode = 'login';
 window.toggleAuthMode = function(mode) {
     authMode = mode;
     const passwordField = document.getElementById('password-field');
@@ -283,37 +328,12 @@ window.toggleAuthMode = function(mode) {
         if (passwordField) passwordField.style.display = 'block';
         if (signupBtn) signupBtn.style.display = 'flex';
         if (toggleLinks) toggleLinks.innerHTML = 'Already have an account? <a href="#" onclick="toggleAuthMode(\'login\')">Login</a>';
-    } else if (mode === 'otp') {
-        if (otpBtn) otpBtn.style.display = 'flex';
-        if (toggleLinks) toggleLinks.innerHTML = '<a href="#" onclick="toggleAuthMode(\'login\')">Back to Login</a>';
     }
 };
 
-// ── FETCH PURCHASES (BUG FIX: no sanitize on query email) ──
-async function fetchPurchases() {
-    const emailInput = document.getElementById('email-input');
-    const email = emailInput ? emailInput.value.trim() : '';
-    const statusMsg = document.getElementById('status-msg');
-
-    if (!email) {
-        if (statusMsg) { statusMsg.style.color = '#9a1212'; statusMsg.innerText = "Please enter an email address."; }
-        return;
-    }
-
-    if (!isValidEmail(email)) {
-        if (statusMsg) { statusMsg.style.color = '#9a1212'; statusMsg.innerText = "Please enter a valid email address."; }
-        return;
-    }
-
-    if (!rateLimiter.check('fetchPurchases', 8, 30000)) {
-        if (statusMsg) { statusMsg.style.color = '#9a1212'; statusMsg.innerText = "Too many requests. Please wait a moment."; }
-        return;
-    }
-
-    await loadUserPurchases(email);
-}
-
-// ── LOAD USER PURCHASES (core function) ──
+// ════════════════════════════════════════════
+// ── LOAD USER PURCHASES ──
+// ════════════════════════════════════════════
 async function loadUserPurchases(email) {
     const statusMsg = document.getElementById('status-msg');
 
@@ -323,8 +343,7 @@ async function loadUserPurchases(email) {
     }
 
     try {
-        // BUG FIX: Use raw email for query, NOT sanitized (sanitize breaks @ symbol)
-        const { data, error } = await supabase
+        const { data, error } = await sb
             .from('purchase')
             .select('purchased_content, created_at')
             .eq('email', email)
@@ -333,10 +352,8 @@ async function loadUserPurchases(email) {
         if (error) throw error;
 
         currentUserEmail = email;
-        localStorage.setItem('twss_user', JSON.stringify({ email: email, name: email.split('@')[0] }));
 
         if (!data || data.length === 0) {
-            // Show dashboard with empty state
             showDashboard(email, []);
             return;
         }
@@ -352,9 +369,6 @@ async function loadUserPurchases(email) {
         }
     }
 }
-
-// Make fetchPurchases available globally for the button onclick
-window.fetchPurchases = fetchPurchases;
 
 // ── SHOW DASHBOARD ──
 function showDashboard(email, data) {
@@ -440,10 +454,10 @@ function renderCourses(uniqueCourses) {
 function initRealtimeSubscription(email) {
     try {
         if (realtimeChannel) {
-            supabase.removeChannel(realtimeChannel);
+            sb.removeChannel(realtimeChannel);
         }
 
-        realtimeChannel = supabase
+        realtimeChannel = sb
             .channel('dashboard-purchases')
             .on('postgres_changes', {
                 event: 'INSERT',
@@ -453,9 +467,6 @@ function initRealtimeSubscription(email) {
             }, async (payload) => {
                 console.log('New purchase detected in real-time:', payload);
                 await refreshPurchases(email);
-                if (typeof showNotification === 'function') {
-                    showNotification('New course unlocked! Refreshing...', 'success');
-                }
             })
             .subscribe((status) => {
                 console.log('Realtime subscription status:', status);
@@ -467,7 +478,7 @@ function initRealtimeSubscription(email) {
 
 async function refreshPurchases(email) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await sb
             .from('purchase')
             .select('purchased_content, created_at')
             .eq('email', email)
@@ -506,44 +517,41 @@ async function refreshPurchases(email) {
 // ── LOGOUT ──
 window.logoutDashboard = async function() {
     currentUserEmail = null;
-    try {
-        await supabase.auth.signOut();
-    } catch (e) {
-        console.log('Sign out error:', e);
-    }
+    currentUser = null;
+    localStorage.removeItem("loggedIn");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("twss_user");
     if (realtimeChannel) {
-        supabase.removeChannel(realtimeChannel);
+        sb.removeChannel(realtimeChannel);
         realtimeChannel = null;
     }
-    localStorage.removeItem('twss_user');
     location.reload();
 };
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Check if returning from OAuth redirect
-    try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session && session.user) {
-            currentUserEmail = session.user.email;
-            localStorage.setItem('twss_user', JSON.stringify({
-                email: session.user.email,
-                name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email.split('@')[0]
-            }));
-            await loadUserPurchases(session.user.email);
-            return;
+    // 1. Check localStorage for saved user
+    const em = localStorage.getItem("userEmail");
+    const loggedIn = localStorage.getItem("loggedIn");
+    if (loggedIn === "true" && em) {
+        try {
+            const { data, error } = await sb.from('users_login').select('*').eq('email', em).maybeSingle();
+            if (data && !error) {
+                currentUser = data;
+                currentUserEmail = em;
+                await loadUserPurchases(em);
+                return;
+            }
+        } catch (e) {
+            console.log('Session check error:', e);
         }
-    } catch (e) {
-        console.log('Session check error:', e);
     }
 
-    // 2. Check localStorage for saved user
+    // 2. Also check twss_user format
     const user = JSON.parse(localStorage.getItem('twss_user') || 'null');
     if (user && user.email) {
-        const input = document.getElementById('email-input');
-        if (input) input.value = user.email;
-        // Auto-fetch purchases
-        await loadUserPurchases(user.email);
+        const emailInput = document.getElementById('email-input');
+        if (emailInput) emailInput.value = user.email;
     }
 
     // 3. Set default auth mode
