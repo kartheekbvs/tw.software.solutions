@@ -302,11 +302,41 @@ function hideSavingOverlay() {
 
 // ── BEFOREUNLOAD WARNING ──
 let checkoutActive = false;
+let razorpayOpenedAt = 0; // Timestamp when Razorpay was opened
 window.addEventListener('beforeunload', function(e) {
     if (checkoutActive) {
         e.preventDefault();
         e.returnValue = 'Your payment is being processed. Are you sure you want to leave?';
         return e.returnValue;
+    }
+});
+
+// ── UPI RECOVERY: Detect when user returns from UPI app ──
+// This is THE critical fix: when a UPI user goes to their payment app
+// and comes back, the Razorpay handler often doesn't fire.
+// We detect the return and show the "I've Completed Payment" button.
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible' && checkoutActive && !paymentHandled) {
+        console.log('[courses.js] Page became visible while checkout active — likely UPI return');
+        // Wait 5 seconds for Razorpay handler to fire on its own
+        setTimeout(function() {
+            if (!paymentHandled && checkoutActive) {
+                console.log('[courses.js] Handler still not fired after visibility return — showing Payment Done button');
+                showPaymentDoneButton();
+            }
+        }, 5000);
+    }
+});
+
+// Also listen for window focus (some mobile browsers don't fire visibilitychange)
+window.addEventListener('focus', function() {
+    if (checkoutActive && !paymentHandled) {
+        console.log('[courses.js] Window focused while checkout active — likely UPI return');
+        setTimeout(function() {
+            if (!paymentHandled && checkoutActive) {
+                showPaymentDoneButton();
+            }
+        }, 5000);
     }
 });
 
@@ -465,6 +495,7 @@ document.getElementById('checkout-form')?.addEventListener('submit', async (e) =
 
     checkoutActive = true;
     paymentHandled = false;
+    razorpayOpenedAt = Date.now();
 
     const options = {
         key: RAZORPAY_KEY_ID,
@@ -474,8 +505,9 @@ document.getElementById('checkout-form')?.addEventListener('submit', async (e) =
         description: "Course Purchase",
         prefill: { name: name, email: email },
         theme: { color: "#080808" },
+        // IMPORTANT: Use ONLY handler OR rzp.on events, NOT both (per Razorpay docs)
+        // Using handler only — it's the most reliable for card/netbanking
         handler: function(response) {
-            // THIS fires for card/netbanking, and SOMETIMES for UPI
             console.log('[courses.js] Razorpay handler fired! Payment ID:', response.razorpay_payment_id);
             checkoutActive = false;
             processSuccessfulPayment(response.razorpay_payment_id, email, cartSnapshot, ownerFlag);
@@ -484,9 +516,9 @@ document.getElementById('checkout-form')?.addEventListener('submit', async (e) =
             ondismiss: function() {
                 console.log('[courses.js] Razorpay modal dismissed');
                 checkoutActive = false;
-                // Show "Payment Done?" button in case they paid but dismissed the modal
+                // Show "Payment Done?" button in case they paid via UPI but handler didn't fire
                 const intent = JSON.parse(localStorage.getItem('twss_cart_intent') || 'null');
-                if (intent && intent.email === email) {
+                if (intent && intent.email === email && !paymentHandled) {
                     showPaymentDoneButton();
                 }
             }
@@ -496,14 +528,10 @@ document.getElementById('checkout-form')?.addEventListener('submit', async (e) =
     try {
         const rzp = new Razorpay(options);
 
-        // Event-based handlers as backup
-        rzp.on('payment.success', function(response) {
-            console.log('[courses.js] Razorpay payment.success event:', response);
-            checkoutActive = false;
-            if (!paymentHandled && response.razorpay_payment_id) {
-                processSuccessfulPayment(response.razorpay_payment_id, email, cartSnapshot, ownerFlag);
-            }
-        });
+        // NOTE: We do NOT use rzp.on('payment.success') here because
+        // Razorpay docs say: "If you are using handler, do not use the
+        // payment.success event and vice versa." Using both can cause
+        // the handler to NOT fire, which was our bug.
 
         rzp.on('payment.error', function(response) {
             console.error('[courses.js] Razorpay payment.error:', response.error);
@@ -515,9 +543,16 @@ document.getElementById('checkout-form')?.addEventListener('submit', async (e) =
 
         rzp.open();
 
-        // Show "Payment Done?" button immediately after Razorpay opens
-        // This is the LIFELINE for UPI users whose handler doesn't fire
-        showPaymentDoneButton();
+        // Do NOT show "Payment Done?" button immediately — it's confusing
+        // Instead, show it after 20 seconds if handler hasn't fired yet
+        // (This covers cases where UPI payment completed but handler didn't fire
+        //  and the user didn't leave the browser)
+        setTimeout(function() {
+            if (!paymentHandled && checkoutActive) {
+                console.log('[courses.js] 20s timeout — showing Payment Done button');
+                showPaymentDoneButton();
+            }
+        }, 20000);
 
     } catch (err) {
         console.error('[courses.js] Razorpay open error:', err);
