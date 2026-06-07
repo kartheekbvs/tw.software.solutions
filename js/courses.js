@@ -2,7 +2,7 @@
    TWSS — Courses Page Logic (Secure + Real-Time)
    ═══════════════════════════════════════════ */
 
-// ── SECURITY: Input Sanitization ──
+// ── SECURITY: Input Sanitization (for HTML output only, NOT for DB queries) ──
 function sanitize(str) {
     if (typeof str !== 'string') return '';
     return str.replace(/[<>"'&]/g, c => ({
@@ -32,7 +32,7 @@ const rateLimiter = {
 const supabaseUrl = 'https://fzwvxesrtdilljgrntpw.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d3Z4ZXNydGRpbGxqZ3JudHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NzU2NzMsImV4cCI6MjA2NjQ1MTY3M30.YnxjUtFawuumihyVGuk8e-o6iE9OkDf-MX1aKRTqA5U';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
-    auth: { persistSession: false },
+    auth: { persistSession: true, autoRefreshToken: true },
     realtime: { params: { eventsPerSecond: 5 } }
 });
 
@@ -218,8 +218,8 @@ document.getElementById('checkout-form')?.addEventListener('submit', async (e) =
         return;
     }
 
-    const email = sanitize(document.getElementById('checkout-email').value.trim());
-    const name = sanitize(document.getElementById('checkout-name').value.trim());
+    const email = document.getElementById('checkout-email').value.trim();
+    const name = document.getElementById('checkout-name').value.trim();
 
     if (!isValidEmail(email)) {
         showMessageModal("Please enter a valid email address.", false);
@@ -283,7 +283,7 @@ window.mockLogin = function() {
         return;
     }
 
-    currentUser = { email: sanitize(email), name: sanitize(email.split('@')[0]) };
+    currentUser = { email: email, name: email.split('@')[0] };
     localStorage.setItem('twss_user', JSON.stringify(currentUser));
     closeModal('authModal');
     openModal('cartModal');

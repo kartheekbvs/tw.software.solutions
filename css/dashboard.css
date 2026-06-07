@@ -388,6 +388,94 @@
     line-height: 1.7;
 }
 
+/* OAuth Buttons */
+.oauth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.oauth-btn {
+    width: 100%;
+    padding: 13px 18px;
+    border: 1.5px solid var(--faint);
+    border-radius: 3px;
+    font-family: var(--ff-ui);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: none;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: transparent;
+}
+.oauth-btn:hover {
+    border-color: var(--ink);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.google-btn {
+    background: #fff;
+    color: var(--ink);
+    border-color: #ddd;
+}
+.google-btn:hover {
+    background: #f8f8f8;
+    border-color: #4285f4;
+    color: #4285f4;
+}
+.github-btn {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+}
+.github-btn:hover {
+    background: #222;
+    box-shadow: 0 4px 16px rgba(8,8,8,0.2);
+}
+
+/* Auth Divider */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 20px 0;
+}
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--faint);
+}
+.auth-divider span {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    color: var(--mid);
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* Auth Toggle */
+.auth-toggle {
+    margin-top: 18px;
+    font-size: 0.82rem;
+    color: var(--mid);
+    text-align: center;
+}
+.auth-toggle a {
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 600;
+    border-bottom: 1px solid var(--faint);
+    transition: border-color 0.2s;
+}
+.auth-toggle a:hover {
+    border-color: var(--ink);
+}
+
 /* Loading Spinner */
 .loading-spinner {
     display: inline-block;
