@@ -62,7 +62,11 @@ const products = [
 
 const ownerCoupon = "OWNERFREE";
 let cart = [];
-let currentUser = null;
+/* currentUser is already declared in app.js — do NOT redeclare with let,
+   otherwise SyntaxError crashes this entire script and all cart functions die */
+if (typeof currentUser === 'undefined') {
+    var currentUser = null;
+}
 let isOwnerOverride = false;
 let realtimeSubscription = null;
 
