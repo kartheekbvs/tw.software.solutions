@@ -28,13 +28,22 @@ const rateLimiter = {
     }
 };
 
-// Supabase Init
+// Supabase Init (with safety check)
 const supabaseUrl = 'https://fzwvxesrtdilljgrntpw.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d3Z4ZXNydGRpbGxqZ3JudHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NzU2NzMsImV4cCI6MjA2NjQ1MTY3M30.YnxjUtFawuumihyVGuk8e-o6iE9OkDf-MX1aKRTqA5U';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
-    auth: { persistSession: true, autoRefreshToken: true },
-    realtime: { params: { eventsPerSecond: 5 } }
-});
+let supabase = null;
+try {
+    if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+        supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
+            auth: { persistSession: true, autoRefreshToken: true },
+            realtime: { params: { eventsPerSecond: 5 } }
+        });
+    } else {
+        console.warn('Supabase JS not loaded yet for courses.js');
+    }
+} catch (e) {
+    console.error('Supabase init error in courses.js:', e);
+}
 
 const RAZORPAY_KEY_ID = "rzp_live_iwzig23hBqUD90";
 
@@ -240,17 +249,23 @@ document.getElementById('checkout-form')?.addEventListener('submit', async (e) =
         handler: async function(response) {
             try {
                 const paymentId = response.razorpay_payment_id;
-                for (let item of cart) {
-                    const { error } = await supabase
-                        .from('purchase')
-                        .insert([{
-                            email: email,
-                            purchased_content: item.name,
-                            payment_id: paymentId,
-                            amount_paid: isOwnerOverride ? 100 : item.price,
-                            created_at: new Date().toISOString()
-                        }]);
-                    if (error) throw error;
+                if (supabase) {
+                    for (let item of cart) {
+                        const { error } = await supabase
+                            .from('purchase')
+                            .insert([{
+                                email: email,
+                                purchased_content: item.name,
+                                payment_id: paymentId,
+                                amount_paid: isOwnerOverride ? 100 : item.price,
+                                created_at: new Date().toISOString()
+                            }]);
+                        if (error) throw error;
+                    }
+                } else {
+                    console.error('Supabase not initialized - cannot save purchase');
+                    showMessageModal("Database not connected. Please contact support with payment ID: " + paymentId, false);
+                    return;
                 }
 
                 cart = [];
@@ -286,31 +301,30 @@ window.mockLogin = function() {
     // Check users_login table for authentication
     (async () => {
         try {
-            const { data, error } = await supabase.from('users_login').select('*').eq('email', email).maybeSingle();
-            if (data && !error) {
-                currentUser = { email: data.email, name: data.name || email.split('@')[0], picture: data.picture };
-                localStorage.setItem("loggedIn", "true");
-                localStorage.setItem("userEmail", email);
-                localStorage.setItem('twss_user', JSON.stringify(currentUser));
-                closeModal('authModal');
-                openModal('cartModal');
-                showCheckoutForm();
-                if (typeof updateProfileUI === 'function') updateProfileUI();
+            if (supabase) {
+                const { data, error } = await supabase.from('users_login').select('*').eq('email', email).maybeSingle();
+                if (data && !error) {
+                    currentUser = { email: data.email, name: data.name || email.split('@')[0], picture: data.picture };
+                } else {
+                    currentUser = { email: email, name: email.split('@')[0] };
+                }
             } else {
-                // User not found — create a basic entry or prompt signup
+                // Supabase not available, just use email
                 currentUser = { email: email, name: email.split('@')[0] };
-                localStorage.setItem("loggedIn", "true");
-                localStorage.setItem("userEmail", email);
-                localStorage.setItem('twss_user', JSON.stringify(currentUser));
-                closeModal('authModal');
-                openModal('cartModal');
-                showCheckoutForm();
-                if (typeof updateProfileUI === 'function') updateProfileUI();
             }
+            localStorage.setItem("loggedIn", "true");
+            localStorage.setItem("userEmail", email);
+            localStorage.setItem('twss_user', JSON.stringify(currentUser));
+            closeModal('authModal');
+            openModal('cartModal');
+            showCheckoutForm();
+            if (typeof updateProfileUI === 'function') updateProfileUI();
         } catch (e) {
             // Fallback: just use email
             currentUser = { email: email, name: email.split('@')[0] };
             localStorage.setItem('twss_user', JSON.stringify(currentUser));
+            localStorage.setItem("loggedIn", "true");
+            localStorage.setItem("userEmail", email);
             closeModal('authModal');
             openModal('cartModal');
             showCheckoutForm();
@@ -321,6 +335,10 @@ window.mockLogin = function() {
 
 // ── REAL-TIME SUBSCRIPTION ──
 function initRealtime() {
+    if (!supabase) {
+        console.warn('Supabase not initialized, skipping realtime');
+        return;
+    }
     try {
         realtimeSubscription = supabase
             .channel('purchase-changes')
@@ -405,6 +423,19 @@ document.addEventListener('keydown', (e) => {
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', () => {
+    // Retry Supabase init if it wasn't available when script first ran
+    if (!supabase && typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+        try {
+            supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
+                auth: { persistSession: true, autoRefreshToken: true },
+                realtime: { params: { eventsPerSecond: 5 } }
+            });
+            console.log('Supabase initialized on DOMContentLoaded retry');
+        } catch (e) {
+            console.error('Supabase retry init error:', e);
+        }
+    }
+
     // Check new auth system first
     const loggedIn = localStorage.getItem("loggedIn");
     const userEmail = localStorage.getItem("userEmail");
