@@ -67,6 +67,14 @@
         </div>
 
         <div id="status-msg" class="status-msg"></div>
+
+        <!-- Verify Payment (for UPI/mobile users whose payment wasn't recorded) -->
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid #222;">
+            <button class="dash-btn-secondary" onclick="verifyPaymentManual()" style="width:100%;font-size:0.8rem;">
+                <i class="fas fa-clipboard-check"></i> Verify Payment
+            </button>
+            <p style="color:#555;font-size:0.72rem;margin-top:6px;text-align:center;">Paid but courses not showing? Click above to verify your payment</p>
+        </div>
     </div>
 
     <!-- Content Section -->
@@ -473,7 +481,8 @@ async function retryPendingDashboardPurchases() {
         if (pending.length === 0) return;
         console.log('Dashboard: Retrying', pending.length, 'pending purchases...');
         const results = await Promise.allSettled(pending.map(async (entry) => {
-            if (entry.retry_count >= 5) return;
+            if (entry.retry_count >= 10) return;
+            entry.retry_count = (entry.retry_count || 0) + 1;
             const { error } = await db.from('purchase').insert([{
                 email: entry.email,
                 purchased_content: entry.purchased_content,
@@ -481,27 +490,157 @@ async function retryPendingDashboardPurchases() {
                 amount_paid: entry.amount_paid,
                 created_at: entry.created_at
             }]);
-            if (error) throw error;
+            if (error) {
+                // Duplicate is OK - already saved
+                if (error.code === '23505' || (error.message && error.message.includes('duplicate'))) {
+                    return entry;
+                }
+                throw error;
+            }
             return entry;
         }));
+        let remaining = JSON.parse(localStorage.getItem('twss_pending_purchases') || '[]');
         results.forEach(r => {
             if (r.status === 'fulfilled' && r.value) {
-                let remaining = JSON.parse(localStorage.getItem('twss_pending_purchases') || '[]');
                 remaining = remaining.filter(p =>
                     !(p.email === r.value.email && p.purchased_content === r.value.purchased_content && p.payment_id === r.value.payment_id)
                 );
-                localStorage.setItem('twss_pending_purchases', JSON.stringify(remaining));
             }
         });
+        // Update retry counts for items that are still pending
+        remaining.forEach(e => { e.retry_count = (e.retry_count || 0) + 1; });
+        localStorage.setItem('twss_pending_purchases', JSON.stringify(remaining));
     } catch (e) {
         console.error('Dashboard retry pending purchases error:', e);
     }
+}
+
+// ── VERIFY PAYMENT (manual recovery for UPI/mobile users) ──
+function verifyPaymentManual() {
+    const email = document.getElementById('email-input').value.trim() || localStorage.getItem('userEmail') || '';
+    const paymentId = prompt('Enter your Razorpay Payment ID\n(Found in your bank statement or payment confirmation, starts with "pay_")');
+    if (!paymentId || !paymentId.trim()) return;
+
+    const statusMsg = document.getElementById('status-msg');
+    if (statusMsg) {
+        statusMsg.style.color = '#fff';
+        statusMsg.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying payment...';
+    }
+
+    (async () => {
+        try {
+            // Check if this payment ID already exists in DB
+            const { data: existing } = await db.from('purchase').select('*').eq('payment_id', paymentId.trim());
+            if (existing && existing.length > 0) {
+                // Payment already recorded - just show purchases
+                if (statusMsg) {
+                    statusMsg.style.color = '#1a7a3f';
+                    statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> Payment found! Loading courses...';
+                }
+                // Set email and fetch
+                if (existing[0].email) {
+                    document.getElementById('email-input').value = existing[0].email;
+                    await fetchPurchases();
+                }
+                return;
+            }
+
+            // Payment not in DB - check cart intent from localStorage
+            const intent = JSON.parse(localStorage.getItem('twss_cart_intent') || 'null');
+            const emailToUse = email || (intent ? intent.email : '');
+
+            if (!emailToUse) {
+                const emailInput = prompt('Enter the email address you used during purchase:');
+                if (!emailInput) return;
+                // Try to save with the provided info
+                if (intent && intent.items) {
+                    for (const item of intent.items) {
+                        await db.from('purchase').insert([{
+                            email: emailInput.trim(),
+                            purchased_content: item.name,
+                            payment_id: paymentId.trim(),
+                            amount_paid: intent.isOwner ? 100 : item.price,
+                            created_at: new Date().toISOString()
+                        }]);
+                    }
+                } else {
+                    if (statusMsg) {
+                        statusMsg.style.color = 'red';
+                        statusMsg.innerText = 'Could not find purchase details. Please contact support with Payment ID: ' + paymentId;
+                    }
+                    return;
+                }
+            } else if (intent && intent.items) {
+                // Save from cart intent
+                for (const item of intent.items) {
+                    await db.from('purchase').insert([{
+                        email: emailToUse,
+                        purchased_content: item.name,
+                        payment_id: paymentId.trim(),
+                        amount_paid: intent.isOwner ? 100 : item.price,
+                        created_at: new Date().toISOString()
+                    }]);
+                }
+            } else {
+                // No intent data - save minimal record
+                await db.from('purchase').insert([{
+                    email: emailToUse,
+                    purchased_content: 'Unknown Course (verify manually)',
+                    payment_id: paymentId.trim(),
+                    amount_paid: 0,
+                    created_at: new Date().toISOString()
+                }]);
+            }
+
+            // Clear pending data
+            localStorage.removeItem('twss_cart_intent');
+
+            if (statusMsg) {
+                statusMsg.style.color = '#1a7a3f';
+                statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> Payment verified! Loading courses...';
+            }
+
+            // Now fetch purchases
+            document.getElementById('email-input').value = emailToUse;
+            await fetchPurchases();
+        } catch (err) {
+            console.error('Verify payment error:', err);
+            if (statusMsg) {
+                statusMsg.style.color = 'red';
+                statusMsg.innerText = 'Error verifying payment: ' + (err.message || 'Unknown error') + '. Please contact support with Payment ID: ' + paymentId;
+            }
+        }
+    })();
 }
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', async () => {
     // Retry any pending purchases from localStorage first
     await retryPendingDashboardPurchases();
+
+    // Check for abandoned cart intent (user paid via UPI but handler didn't fire)
+    try {
+        const intent = JSON.parse(localStorage.getItem('twss_cart_intent') || 'null');
+        if (intent && intent.email) {
+            const intentTime = new Date(intent.timestamp).getTime();
+            const now = Date.now();
+            if (now - intentTime < 30 * 60 * 1000) { // Within 30 minutes
+                // Show recovery banner
+                const banner = document.createElement('div');
+                banner.id = 'payment-recovery-banner';
+                banner.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:#1a1a2e;color:#fff;padding:14px 20px;z-index:99999;display:flex;align-items:center;justify-content:center;gap:12px;font-family:Poppins,sans-serif;box-shadow:0 2px 20px rgba(0,0,0,0.5);flex-wrap:wrap;';
+                banner.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#ffd700;font-size:1.2rem;"></i>' +
+                    '<span style="font-size:0.9rem;">Your recent payment may not have been recorded.</span>' +
+                    '<button onclick="verifyPaymentManual()" style="padding:8px 18px;background:#ffd700;color:#000;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:0.85rem;">Verify Payment</button>' +
+                    '<button onclick="this.parentElement.remove(); localStorage.removeItem(\'twss_cart_intent\');" style="padding:8px 12px;background:transparent;color:#888;border:1px solid #444;border-radius:6px;cursor:pointer;font-size:0.8rem;">Dismiss</button>';
+                document.body.appendChild(banner);
+            } else {
+                localStorage.removeItem('twss_cart_intent');
+            }
+        }
+    } catch (e) {
+        console.error('Dashboard cart intent check error:', e);
+    }
 
     // Check if user is already logged in from localStorage
     const em = localStorage.getItem("userEmail");

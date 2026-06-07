@@ -31,22 +31,34 @@ const rateLimiter = {
     }
 };
 
-// Supabase Init (with safety check) — use different name to avoid any conflicts
+// ═══════════════════════════════════════════════════════
+// ── SUPABASE: Reuse sb from app.js, NEVER create a second client ──
+// Two Supabase clients on the same page causes auth token conflicts
+// that silently break inserts. We MUST use the same instance.
+// ═══════════════════════════════════════════════════════
 const _sbUrl = 'https://fzwvxesrtdilljgrntpw.supabase.co';
 const _sbKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d3Z4ZXNydGRpbGxqZ3JudHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NzU2NzMsImV4cCI6MjA2NjQ1MTY3M30.YnxjUtFawuumihyVGuk8e-o6iE9OkDf-MX1aKRTqA5U';
-let _sb = null;
-try {
-    if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-        _sb = window.supabase.createClient(_sbUrl, _sbKey, {
-            auth: { persistSession: true, autoRefreshToken: true },
-            realtime: { params: { eventsPerSecond: 5 } }
-        });
-    } else {
-        console.warn('Supabase JS not loaded yet for courses.js');
+
+function getSupabase() {
+    // Priority 1: Use the shared client from app.js
+    if (typeof sb !== 'undefined' && sb) return sb;
+    if (window.sb) return window.sb;
+    // Priority 2: Use our own if we already created one
+    if (typeof _sb !== 'undefined' && _sb) return _sb;
+    // Priority 3: Create one (last resort - shouldn't happen if app.js loaded first)
+    try {
+        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+            _sb = window.supabase.createClient(_sbUrl, _sbKey);
+            console.warn('[courses.js] Created fallback Supabase client - app.js client not found');
+            return _sb;
+        }
+    } catch (e) {
+        console.error('[courses.js] Supabase init error:', e);
     }
-} catch (e) {
-    console.error('Supabase init error in courses.js:', e);
+    return null;
 }
+
+let _sb = null; // Will be set by getSupabase()
 
 const RAZORPAY_KEY_ID = "rzp_live_iwzig23hBqUD90";
 
@@ -67,9 +79,14 @@ const ownerCoupon = "OWNERFREE";
 let cart = [];
 let courseCurrentUser = null;
 let isOwnerOverride = false;
+let isCheckoutInProgress = false; // Flag for beforeunload warning
 let realtimeSubscription = null;
 
+// ═══════════════════════════════════════════════════════
 // ── PENDING PURCHASES (localStorage fallback) ──
+// This is the CRITICAL safety net. Even if the Razorpay handler
+// never fires (common with UPI on mobile), we have the data.
+// ═══════════════════════════════════════════════════════
 function savePendingPurchases(email, items, paymentId, isOwner) {
     try {
         const pending = JSON.parse(localStorage.getItem('twss_pending_purchases') || '[]');
@@ -84,9 +101,30 @@ function savePendingPurchases(email, items, paymentId, isOwner) {
             });
         });
         localStorage.setItem('twss_pending_purchases', JSON.stringify(pending));
+        console.log('[courses.js] Saved', items.length, 'pending purchases to localStorage');
     } catch (e) {
-        console.error('Failed to save pending purchases:', e);
+        console.error('[courses.js] Failed to save pending purchases:', e);
     }
+}
+
+// Save cart intent BEFORE opening Razorpay (for UPI recovery)
+function saveCartIntent(email, items, isOwner) {
+    try {
+        localStorage.setItem('twss_cart_intent', JSON.stringify({
+            email: email,
+            items: items.map(i => ({ name: i.name, price: i.price })),
+            isOwner: isOwner,
+            timestamp: new Date().toISOString()
+        }));
+    } catch (e) {
+        console.error('[courses.js] Failed to save cart intent:', e);
+    }
+}
+
+function clearCartIntent() {
+    try {
+        localStorage.removeItem('twss_cart_intent');
+    } catch (e) {}
 }
 
 function removePendingPurchase(entry) {
@@ -97,26 +135,35 @@ function removePendingPurchase(entry) {
         );
         localStorage.setItem('twss_pending_purchases', JSON.stringify(pending));
     } catch (e) {
-        console.error('Failed to remove pending purchase:', e);
+        console.error('[courses.js] Failed to remove pending purchase:', e);
     }
 }
 
 async function retryPendingPurchases() {
-    if (!_sb) return;
+    const db = getSupabase();
+    if (!db) return;
     try {
         const pending = JSON.parse(localStorage.getItem('twss_pending_purchases') || '[]');
         if (pending.length === 0) return;
-        console.log('Retrying', pending.length, 'pending purchases...');
+        console.log('[courses.js] Retrying', pending.length, 'pending purchases...');
         const results = await Promise.allSettled(pending.map(async (entry) => {
-            if (entry.retry_count >= 5) return; // max retries
-            const { error } = await _sb.from('purchase').insert([{
+            if (entry.retry_count >= 10) return; // max retries
+            entry.retry_count = (entry.retry_count || 0) + 1;
+            const { error } = await db.from('purchase').insert([{
                 email: entry.email,
                 purchased_content: entry.purchased_content,
                 payment_id: entry.payment_id,
                 amount_paid: entry.amount_paid,
                 created_at: entry.created_at
             }]);
-            if (error) throw error;
+            if (error) {
+                // Check if it's a duplicate - that's OK, means it was already saved
+                if (error.code === '23505' || (error.message && error.message.includes('duplicate'))) {
+                    console.log('[courses.js] Duplicate entry - already saved:', entry.purchased_content);
+                    return entry; // Treat as success
+                }
+                throw error;
+            }
             return entry;
         }));
         results.forEach(r => {
@@ -124,8 +171,65 @@ async function retryPendingPurchases() {
                 removePendingPurchase(r.value);
             }
         });
+        // Update retry counts for failed items
+        const remaining = JSON.parse(localStorage.getItem('twss_pending_purchases') || '[]');
+        remaining.forEach(e => { e.retry_count = (e.retry_count || 0) + 1; });
+        localStorage.setItem('twss_pending_purchases', JSON.stringify(remaining));
     } catch (e) {
-        console.error('Retry pending purchases error:', e);
+        console.error('[courses.js] Retry pending purchases error:', e);
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+// ── CORE: Save purchases to database (used by all handlers) ──
+// ═══════════════════════════════════════════════════════
+async function savePurchasesToDb(email, cartSnapshot, paymentId, ownerFlag) {
+    const db = getSupabase();
+    if (!db) {
+        console.error('[courses.js] No Supabase client - cannot save purchases');
+        return false;
+    }
+
+    try {
+        const insertPromises = cartSnapshot.map(item =>
+            db.from('purchase').insert([{
+                email: email,
+                purchased_content: item.name,
+                payment_id: paymentId,
+                amount_paid: ownerFlag ? 100 : item.price,
+                created_at: new Date().toISOString()
+            }])
+        );
+        const results = await Promise.allSettled(insertPromises);
+
+        let allSuccess = true;
+        results.forEach((r, i) => {
+            if (r.status === 'fulfilled' && !r.value?.error) {
+                // Success - remove from pending
+                removePendingPurchase({
+                    email: email,
+                    purchased_content: cartSnapshot[i].name,
+                    payment_id: paymentId
+                });
+            } else {
+                allSuccess = false;
+                const errDetail = r.status === 'rejected' ? r.reason : r.value?.error;
+                // Duplicate is OK
+                if (errDetail && (errDetail.code === '23505' || (errDetail.message && errDetail.message.includes('duplicate')))) {
+                    removePendingPurchase({
+                        email: email,
+                        purchased_content: cartSnapshot[i].name,
+                        payment_id: paymentId
+                    });
+                } else {
+                    console.error('[courses.js] Insert failed for', cartSnapshot[i].name, ':', errDetail);
+                }
+            }
+        });
+        return allSuccess;
+    } catch (error) {
+        console.error('[courses.js] DB save error:', error);
+        return false;
     }
 }
 
@@ -135,7 +239,7 @@ function showSavingOverlay() {
     if (!overlay) {
         overlay = document.createElement('div');
         overlay.id = 'saving-overlay';
-        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100000;display:flex;align-items:center;justify-content:center;flex-direction:column;';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:100000;display:flex;align-items:center;justify-content:center;flex-direction:column;';
         overlay.innerHTML = '<div style="color:#fff;font-size:1.3rem;font-family:Poppins,sans-serif;"><i class="fas fa-spinner fa-spin" style="margin-right:10px;"></i>Saving your purchase...</div><div style="color:#999;font-size:0.85rem;margin-top:10px;font-family:Poppins,sans-serif;">Please do not close this page</div>';
         document.body.appendChild(overlay);
     } else {
@@ -147,6 +251,15 @@ function hideSavingOverlay() {
     const overlay = document.getElementById('saving-overlay');
     if (overlay) overlay.style.display = 'none';
 }
+
+// ── BEFOREUNLOAD WARNING ──
+window.addEventListener('beforeunload', function(e) {
+    if (isCheckoutInProgress) {
+        e.preventDefault();
+        e.returnValue = 'Your payment is being processed. Are you sure you want to leave?';
+        return e.returnValue;
+    }
+});
 
 // ── FILTER TABS ──
 document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -282,7 +395,9 @@ window.applyCoupon = function() {
     updateCartUI();
 };
 
-// ── CHECKOUT ──
+// ═══════════════════════════════════════════════════════
+// ── CHECKOUT (with UPI/mobile reliability fixes) ──
+// ═══════════════════════════════════════════════════════
 window.showCheckoutForm = function() {
     if (cart.length === 0) return;
     if (!courseCurrentUser) {
@@ -320,27 +435,67 @@ document.getElementById('checkout-form')?.addEventListener('submit', async (e) =
     let subtotal = cart.reduce((acc, item) => acc + item.price, 0);
     let finalAmount = isOwnerOverride ? 100 : Math.max(100, subtotal);
 
-    // Validate Supabase is ready before opening Razorpay
-    if (!_sb) {
-        // Try one more time to initialize
-        try {
-            if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-                _sb = window.supabase.createClient(_sbUrl, _sbKey, {
-                    auth: { persistSession: true, autoRefreshToken: true },
-                    realtime: { params: { eventsPerSecond: 5 } }
-                });
-            }
-        } catch (e) {
-            console.error('Last-resort Supabase init failed:', e);
-        }
-        if (!_sb) {
-            showMessageModal("Database not connected. Please refresh the page and try again.", false);
-            return;
-        }
+    // Validate Supabase is ready
+    const db = getSupabase();
+    if (!db) {
+        showMessageModal("Database not connected. Please refresh the page and try again.", false);
+        return;
     }
 
-    const cartSnapshot = [...cart]; // snapshot cart items before opening Razorpay
-    const ownerFlag = isOwnerOverride; // snapshot owner flag
+    // Snapshot cart state BEFORE opening Razorpay
+    const cartSnapshot = [...cart];
+    const ownerFlag = isOwnerOverride;
+
+    // ── CRITICAL: Save cart intent to localStorage BEFORE opening Razorpay ──
+    // This ensures that even if the handler NEVER fires (UPI mobile issue),
+    // we still know what the user was trying to buy
+    saveCartIntent(email, cartSnapshot, ownerFlag);
+
+    // Set checkout in progress flag (for beforeunload warning)
+    isCheckoutInProgress = true;
+
+    // ── Payment success handler (shared between options.handler and event listener) ──
+    function handlePaymentSuccess(response) {
+        const paymentId = response.razorpay_payment_id || 'unknown';
+
+        console.log('[courses.js] Payment success! ID:', paymentId);
+
+        // CRITICAL: Show blocking overlay IMMEDIATELY (synchronous)
+        showSavingOverlay();
+
+        // Save to localStorage FIRST as safety net (synchronous)
+        savePendingPurchases(email, cartSnapshot, paymentId, ownerFlag);
+
+        // Clear the checkout flag - payment succeeded, now we just need to save
+        isCheckoutInProgress = false;
+
+        // Now do the async DB inserts
+        (async () => {
+            try {
+                await savePurchasesToDb(email, cartSnapshot, paymentId, ownerFlag);
+
+                // Clear cart intent - purchase is saved (or in localStorage)
+                clearCartIntent();
+
+                cart = [];
+                isOwnerOverride = false;
+                updateCartUI();
+                updateCardButtons();
+                hideSavingOverlay();
+                closeModal('cartModal');
+                openModal('purchaseSuccessModal');
+            } catch (error) {
+                console.error('[courses.js] Post-payment error:', error);
+                hideSavingOverlay();
+                cart = [];
+                isOwnerOverride = false;
+                updateCartUI();
+                updateCardButtons();
+                closeModal('cartModal');
+                showMessageModal("Payment succeeded! Your courses are being activated. If they don't appear in the dashboard within a minute, please go to dashboard and click 'Verify Payment'. Payment ID: " + paymentId, false);
+            }
+        })();
+    }
 
     const options = {
         key: RAZORPAY_KEY_ID,
@@ -348,80 +503,52 @@ document.getElementById('checkout-form')?.addEventListener('submit', async (e) =
         currency: "INR",
         name: "TWSS",
         description: "Course Purchase",
-        prefill: { name: name, email: email },
+        prefill: { name: name, email: email, contact: "" },
         theme: { color: "#080808" },
-        handler: function(response) {
-            // CRITICAL: Show blocking overlay IMMEDIATELY (synchronous)
-            // This prevents the user from navigating away while we save
-            showSavingOverlay();
-
-            const paymentId = response.razorpay_payment_id;
-
-            // Save to localStorage FIRST as safety net (synchronous)
-            savePendingPurchases(email, cartSnapshot, paymentId, ownerFlag);
-
-            // Now do the async DB inserts
-            (async () => {
-                try {
-                    if (_sb) {
-                        // Use Promise.all for parallel inserts (faster than sequential)
-                        const insertPromises = cartSnapshot.map(item =>
-                            _sb.from('purchase').insert([{
-                                email: email,
-                                purchased_content: item.name,
-                                payment_id: paymentId,
-                                amount_paid: ownerFlag ? 100 : item.price,
-                                created_at: new Date().toISOString()
-                            }])
-                        );
-                        const results = await Promise.allSettled(insertPromises);
-
-                        // Check for failures
-                        const failures = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value?.error));
-                        if (failures.length > 0) {
-                            console.error('Some purchases failed to save:', failures);
-                            // Don't throw - partial success is OK, localStorage has the rest
-                        }
-
-                        // Remove successfully saved items from pending
-                        results.forEach((r, i) => {
-                            if (r.status === 'fulfilled' && !r.value?.error) {
-                                removePendingPurchase({
-                                    email: email,
-                                    purchased_content: cartSnapshot[i].name,
-                                    payment_id: paymentId
-                                });
-                            }
-                        });
-                    } else {
-                        console.error('Supabase not initialized - purchases saved in localStorage for retry');
-                        // Purchases are in localStorage, will be retried on next page load
-                    }
-
-                    cart = [];
-                    isOwnerOverride = false;
-                    updateCartUI();
-                    updateCardButtons();
-                    hideSavingOverlay();
-                    closeModal('cartModal');
-                    openModal('purchaseSuccessModal');
-                } catch (error) {
-                    console.error('Database error:', error);
-                    hideSavingOverlay();
-                    // Don't worry - localStorage has the purchases, they'll be retried
-                    cart = [];
-                    isOwnerOverride = false;
-                    updateCartUI();
-                    updateCardButtons();
-                    closeModal('cartModal');
-                    showMessageModal("Payment succeeded! Your courses are being activated. If they don't appear in the dashboard within a minute, please refresh the page or contact support with payment ID: " + paymentId, false);
-                }
-            })();
+        // Standard handler - works for card/netbanking
+        handler: handlePaymentSuccess,
+        // Modal close handler - user closed without paying
+        modal: {
+            ondismiss: function() {
+                console.log('[courses.js] Razorpay modal dismissed');
+                isCheckoutInProgress = false;
+                // Don't clear cart intent - they might reopen
+            }
         }
     };
 
-    const rzp = new Razorpay(options);
-    rzp.open();
+    try {
+        const rzp = new Razorpay(options);
+
+        // ── EVENT-BASED handlers (more reliable for UPI on mobile) ──
+        // These fire even when options.handler doesn't (e.g., UPI redirect back to page)
+        rzp.on('payment.success', function(response) {
+            console.log('[courses.js] Razorpay payment.success event:', response);
+            // The options.handler should also fire, but as a backup:
+            // We use a flag to prevent double-processing
+            if (!isCheckoutInProgress) return; // Already handled by options.handler
+            handlePaymentSuccess(response);
+        });
+
+        rzp.on('payment.error', function(response) {
+            console.error('[courses.js] Razorpay payment.error:', response.error);
+            isCheckoutInProgress = false;
+            hideSavingOverlay();
+            showMessageModal("Payment failed: " + (response.error.description || "Unknown error. Please try again."), false);
+        });
+
+        rzp.on('payment.close', function() {
+            console.log('[courses.js] Razorpay payment.close event');
+            isCheckoutInProgress = false;
+            hideSavingOverlay();
+        });
+
+        rzp.open();
+    } catch (err) {
+        console.error('[courses.js] Razorpay open error:', err);
+        isCheckoutInProgress = false;
+        showMessageModal("Could not open payment gateway. Please refresh and try again.", false);
+    }
 });
 
 // ── AUTH ──
@@ -439,9 +566,10 @@ window.mockLogin = function() {
 
     // Check users_login table for authentication
     (async () => {
+        const db = getSupabase();
         try {
-            if (_sb) {
-                const { data, error } = await _sb.from('users_login').select('*').eq('email', email).maybeSingle();
+            if (db) {
+                const { data, error } = await db.from('users_login').select('*').eq('email', email).maybeSingle();
                 if (data && !error) {
                     courseCurrentUser = { email: data.email, name: data.name || email.split('@')[0], picture: data.picture };
                 } else {
@@ -472,26 +600,27 @@ window.mockLogin = function() {
 
 // ── REAL-TIME SUBSCRIPTION ──
 function initRealtime() {
-    if (!_sb) {
-        console.warn('Supabase not initialized, skipping realtime');
+    const db = getSupabase();
+    if (!db) {
+        console.warn('[courses.js] Supabase not initialized, skipping realtime');
         return;
     }
     try {
-        realtimeSubscription = _sb
+        realtimeSubscription = db
             .channel('purchase-changes')
             .on('postgres_changes', {
                 event: 'INSERT',
                 schema: 'public',
                 table: 'purchase'
             }, (payload) => {
-                console.log('New purchase detected:', payload);
+                console.log('[courses.js] New purchase detected:', payload);
                 if (typeof showNotification === 'function') {
                     showNotification('New purchase completed!', 'success');
                 }
             })
             .subscribe();
     } catch (e) {
-        console.log('Realtime not available:', e);
+        console.log('[courses.js] Realtime not available:', e);
     }
 }
 
@@ -560,18 +689,8 @@ document.addEventListener('keydown', (e) => {
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', () => {
-    // Retry Supabase init if it wasn't available when script first ran
-    if (!_sb && typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-        try {
-            _sb = window.supabase.createClient(_sbUrl, _sbKey, {
-                auth: { persistSession: true, autoRefreshToken: true },
-                realtime: { params: { eventsPerSecond: 5 } }
-            });
-            console.log('Supabase initialized on DOMContentLoaded retry');
-        } catch (e) {
-            console.error('Supabase retry init error:', e);
-        }
-    }
+    // Initialize Supabase reference
+    _sb = getSupabase();
 
     // Check existing auth from localStorage
     const loggedIn = localStorage.getItem("loggedIn");
@@ -587,6 +706,93 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Retry any pending purchases that failed to save previously
     retryPendingPurchases();
+
+    // Check for abandoned cart intent (user paid via UPI but handler didn't fire)
+    // This is the KEY recovery mechanism for UPI payments
+    (async () => {
+        try {
+            const intent = JSON.parse(localStorage.getItem('twss_cart_intent') || 'null');
+            if (!intent) return;
+
+            // Only process if intent is recent (within 30 minutes)
+            const intentTime = new Date(intent.timestamp).getTime();
+            const now = Date.now();
+            if (now - intentTime > 30 * 60 * 1000) {
+                clearCartIntent();
+                return;
+            }
+
+            // Check if user is logged in and has no matching purchases in DB
+            const db = getSupabase();
+            if (!db || !intent.email) return;
+
+            const { data: existing } = await db.from('purchase')
+                .select('purchased_content')
+                .eq('email', intent.email);
+
+            const existingNames = new Set((existing || []).map(p => p.purchased_content));
+            const missingItems = intent.items.filter(item => !existingNames.has(item.name));
+
+            if (missingItems.length > 0) {
+                // Show recovery banner
+                const banner = document.createElement('div');
+                banner.id = 'payment-recovery-banner';
+                banner.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:#1a1a2e;color:#fff;padding:14px 20px;z-index:99999;display:flex;align-items:center;justify-content:center;gap:12px;font-family:Poppins,sans-serif;box-shadow:0 2px 20px rgba(0,0,0,0.5);';
+                banner.innerHTML = `
+                    <i class="fas fa-exclamation-triangle" style="color:#ffd700;font-size:1.2rem;"></i>
+                    <span style="font-size:0.9rem;">Your recent payment may not have been recorded. Click below to verify.</span>
+                    <button onclick="verifyPaymentFromBanner()" style="padding:8px 18px;background:#ffd700;color:#000;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:0.85rem;">Verify Payment</button>
+                    <button onclick="this.parentElement.remove(); localStorage.removeItem('twss_cart_intent');" style="padding:8px 12px;background:transparent;color:#888;border:1px solid #444;border-radius:6px;cursor:pointer;font-size:0.8rem;">Dismiss</button>
+                `;
+                document.body.appendChild(banner);
+            } else {
+                // All items already in DB - clear the intent
+                clearCartIntent();
+            }
+        } catch (e) {
+            console.error('[courses.js] Cart intent recovery error:', e);
+        }
+    })();
 });
+
+// ── PAYMENT VERIFICATION (for UPI/mobile recovery) ──
+window.verifyPaymentFromBanner = function() {
+    const banner = document.getElementById('payment-recovery-banner');
+    if (banner) banner.remove();
+
+    // Ask user for their Razorpay payment ID
+    const paymentId = prompt('Enter your Razorpay Payment ID (starts with "pay_") from your bank statement or payment confirmation:');
+    if (!paymentId || !paymentId.trim()) return;
+
+    const intent = JSON.parse(localStorage.getItem('twss_cart_intent') || 'null');
+    if (!intent) {
+        showMessageModal("No pending purchase found. If you made a payment, please contact support with your payment ID: " + paymentId, false);
+        return;
+    }
+
+    showSavingOverlay();
+
+    (async () => {
+        try {
+            // Save each item with the provided payment ID
+            await savePurchasesToDb(intent.email, intent.items, paymentId.trim(), intent.isOwner);
+
+            // Also save to pending as backup
+            savePendingPurchases(intent.email, intent.items, paymentId.trim(), intent.isOwner);
+
+            clearCartIntent();
+            hideSavingOverlay();
+
+            cart = [];
+            isOwnerOverride = false;
+            updateCartUI();
+            updateCardButtons();
+            openModal('purchaseSuccessModal');
+        } catch (error) {
+            hideSavingOverlay();
+            showMessageModal("Could not verify payment automatically. Please contact support with payment ID: " + paymentId, false);
+        }
+    })();
+};
 
 })(); // end IIFE
