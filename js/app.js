@@ -1,7 +1,6 @@
 /* ═══════════════════════════════════════════
    TWSS — Shared Application Logic
    Full Auth: Google OAuth, Email/Password, OTP, Forgot Password
-   Uses users_login table + Google Identity Services + EmailJS
    ═══════════════════════════════════════════ */
 
 // ── CUSTOM CURSOR ──
@@ -27,7 +26,6 @@
     }
     animateRing();
 
-    // Hover states
     document.querySelectorAll('a, button, .s-card, .bento-card, .premium-card, .add-to-cart-btn, .about-stat').forEach(el => {
         el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
         el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
@@ -41,7 +39,6 @@
 (function() {
     const header = document.getElementById('header');
     if (!header) return;
-
     window.addEventListener('scroll', () => {
         header.classList.toggle('solid', window.scrollY > 50);
     }, { passive: true });
@@ -51,41 +48,43 @@
 (function() {
     const revealElements = document.querySelectorAll('.reveal');
     if (!revealElements.length) return;
-
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('in');
-            }
+            if (entry.isIntersecting) entry.target.classList.add('in');
         });
     }, { threshold: 0.1 });
-
     revealElements.forEach(el => observer.observe(el));
 })();
 
 // ── MOBILE MENU ──
 function toggleMobileMenu() {
     const nav = document.getElementById('mobileNav');
-    if (nav) {
-        nav.classList.toggle('active');
-    }
+    if (nav) nav.classList.toggle('active');
 }
 
 /* ═══════════════════════════════════════════
-   SUPABASE + EMAILJS INIT
+   SUPABASE + EMAILJS INIT (with safety checks)
    ═══════════════════════════════════════════ */
-const { createClient } = supabase;
-const sb = createClient(
-    'https://fzwvxesrtdilljgrntpw.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d3Z4ZXNydGRpbGxqZ3JudHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NzU2NzMsImV4cCI6MjA2NjQ1MTY3M30.YnxjUtFawuumihyVGuk8e-o6iE9OkDf-MX1aKRTqA5U'
-);
-
-emailjs.init("Kvw3qwiz3bt3Xutlf");
-
 const EJS_SVC = "service_o3hfoip";
 const EJS_TPL = "template_0lscxdn";
 const GOOGLE_CLIENT_ID = "930575952017-crls3493s43tld7rmsr0unf1il7qi627.apps.googleusercontent.com";
 const RESEND_S = 60;
+
+let sb = null;
+try {
+    if (typeof supabase !== 'undefined' && supabase.createClient) {
+        sb = supabase.createClient(
+            'https://fzwvxesrtdilljgrntpw.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d3Z4ZXNydGRpbGxqZ3JudHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NzU2NzMsImV4cCI6MjA2NjQ1MTY3M30.YnxjUtFawuumihyVGuk8e-o6iE9OkDf-MX1aKRTqA5U'
+        );
+    }
+} catch (e) { console.error('Supabase init error:', e); }
+
+try {
+    if (typeof emailjs !== 'undefined' && emailjs.init) {
+        emailjs.init("Kvw3qwiz3bt3Xutlf");
+    }
+} catch (e) { console.error('EmailJS init error:', e); }
 
 let currentOtp = null, otpExpiry = 0, resendTimer = null;
 let currentUser = null, isAuthenticated = false;
@@ -95,6 +94,7 @@ let signupEmail = '', signupPassword = '', resetEmail = '';
    AUTH STATUS CHECK
    ═══════════════════════════════════════════ */
 async function checkAuthStatus() {
+    if (!sb) return;
     const em = localStorage.getItem("userEmail");
     if (localStorage.getItem("loggedIn") === "true" && em) {
         try {
@@ -144,11 +144,11 @@ function renderLogin() {
         <input type="email" id="loginEmail" placeholder="Email address">
         <input type="password" id="loginPassword" placeholder="Password" onkeydown="if(event.key==='Enter') login()">
         <button type="button" onclick="login()">Sign In</button>
-        <div class="auth-status" id="authStatus"></div>
+        <div class="auth-status" id="authStatus" style="display:none;"></div>
         <p>New here? <a href="#" onclick="event.preventDefault();renderSignup()">Create account</a></p>
         <p style="margin-top:8px;">Forgot password? <a href="#" onclick="event.preventDefault();renderForgot()">Reset it</a></p>
     `;
-    setTimeout(initGoogleBtn, 150);
+    setTimeout(initGoogleBtn, 200);
 }
 
 /* ── RENDER SIGNUP FORM ── */
@@ -161,20 +161,20 @@ function renderSignup() {
         <div class="auth-divider"><span>or</span></div>
         <div id="emailBox">
             <input type="email" id="signupEmail" placeholder="Email address">
-            <input type="password" id="signupPassword" placeholder="Password">
+            <input type="password" id="signupPassword" placeholder="Password (min 6 chars)">
             <button type="button" id="sendOtpBtn">Send OTP</button>
         </div>
         <div id="otpBox" style="display:none">
             <p style="font-size:0.82rem;color:var(--mid);margin-bottom:14px;text-align:center;">Check your inbox for the OTP</p>
-            <input type="text" id="otpInput" placeholder="6-digit OTP" maxlength="6" class="otp-input" style="letter-spacing:0.3em;font-size:1.3rem;text-align:center;">
+            <input type="text" id="otpInput" placeholder="6-digit OTP" maxlength="6" style="letter-spacing:0.3em;font-size:1.3rem;text-align:center;">
             <button type="button" id="verifyOtpBtn">Verify & Create Account</button>
-            <div id="otpMsg" class="otp-status" style="font-size:0.8rem;margin-top:8px;text-align:center;"></div>
-            <button type="button" id="resendOtpBtn" class="resend-otp" disabled style="background:none!important;color:var(--mid)!important;border:1px solid var(--faint)!important;font-size:0.72rem!important;margin-top:10px!important;transition:all 0.2s!important;">Resend in ${RESEND_S}s</button>
+            <div id="otpMsg" style="font-size:0.8rem;margin-top:8px;text-align:center;"></div>
+            <button type="button" id="resendOtpBtn" disabled style="width:100%;padding:10px;background:none;color:var(--mid);border:1px solid var(--faint);font-size:0.72rem;margin-top:10px;cursor:pointer;font-family:var(--ff-ui);letter-spacing:0.08em;">Resend in ${RESEND_S}s</button>
         </div>
-        <div class="auth-status" id="authStatus"></div>
+        <div class="auth-status" id="authStatus" style="display:none;"></div>
         <p>Have an account? <a href="#" onclick="event.preventDefault();renderLogin()">Sign in</a></p>
     `;
-    setTimeout(() => { initGoogleBtn(); bindOtp(); }, 150);
+    setTimeout(() => { initGoogleBtn(); bindOtp(); }, 200);
 }
 
 /* ── RENDER FORGOT PASSWORD FORM ── */
@@ -189,16 +189,16 @@ function renderForgot() {
             <button type="button" id="sendForgotBtn">Send Reset Code</button>
         </div>
         <div id="resetBox" style="display:none">
-            <input type="text" id="resetOtp" placeholder="Reset code" maxlength="6" class="otp-input" style="letter-spacing:0.3em;font-size:1.3rem;text-align:center;">
+            <input type="text" id="resetOtp" placeholder="Reset code" maxlength="6" style="letter-spacing:0.3em;font-size:1.3rem;text-align:center;">
             <input type="password" id="newPass" placeholder="New password">
             <button type="button" id="verifyResetBtn">Set New Password</button>
-            <div id="resetMsg" class="otp-status" style="font-size:0.8rem;margin-top:8px;text-align:center;"></div>
-            <button type="button" id="resendResetBtn" class="resend-otp" disabled style="background:none!important;color:var(--mid)!important;border:1px solid var(--faint)!important;font-size:0.72rem!important;margin-top:10px!important;">Resend in ${RESEND_S}s</button>
+            <div id="resetMsg" style="font-size:0.8rem;margin-top:8px;text-align:center;"></div>
+            <button type="button" id="resendResetBtn" disabled style="width:100%;padding:10px;background:none;color:var(--mid);border:1px solid var(--faint);font-size:0.72rem;margin-top:10px;cursor:pointer;font-family:var(--ff-ui);">Resend in ${RESEND_S}s</button>
         </div>
-        <div class="auth-status" id="authStatus"></div>
+        <div class="auth-status" id="authStatus" style="display:none;"></div>
         <p>Remembered? <a href="#" onclick="event.preventDefault();renderLogin()">Sign in</a></p>
     `;
-    setTimeout(bindForgot, 80);
+    setTimeout(bindForgot, 100);
 }
 
 /* ═══════════════════════════════════════════
@@ -206,7 +206,13 @@ function renderForgot() {
    ═══════════════════════════════════════════ */
 function initGoogleBtn() {
     const el = document.getElementById('googleSignInButton');
-    if (el && window.google && window.google.accounts) {
+    if (!el) return;
+    if (!window.google || !window.google.accounts || !window.google.accounts.id) {
+        // Google not loaded yet — show a manual Google button instead
+        el.innerHTML = '<button type="button" onclick="loginWithGoogleManual()" style="width:100%;padding:13px;border:1.5px solid var(--faint);border-radius:3px;font-family:var(--ff-ui);font-size:0.8rem;font-weight:700;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:var(--ink);"><i class="fab fa-google" style="color:#4285f4;"></i> Continue with Google</button>';
+        return;
+    }
+    try {
         google.accounts.id.initialize({
             client_id: GOOGLE_CLIENT_ID,
             callback: handleGoogle
@@ -214,17 +220,34 @@ function initGoogleBtn() {
         google.accounts.id.renderButton(el, {
             theme: "outline",
             size: "large",
-            width: el.offsetWidth || 350,
+            width: el.offsetWidth || 340,
             text: "signin_with",
             logo_alignment: "left"
         });
+    } catch (e) {
+        console.error('Google button init error:', e);
+        el.innerHTML = '<button type="button" onclick="loginWithGoogleManual()" style="width:100%;padding:13px;border:1.5px solid var(--faint);border-radius:3px;font-family:var(--ff-ui);font-size:0.8rem;font-weight:700;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:var(--ink);"><i class="fab fa-google" style="color:#4285f4;"></i> Continue with Google</button>';
     }
 }
+
+// Manual Google login fallback using Supabase OAuth
+window.loginWithGoogleManual = async function() {
+    if (!sb) { setAS('Database not connected. Please refresh.', 'error'); return; }
+    setAS('Redirecting to Google...', 'info');
+    try {
+        const { error } = await sb.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: window.location.origin + '/dashboard.html' }
+        });
+        if (error) throw error;
+    } catch (e) {
+        setAS('Google login error: ' + e.message, 'error');
+    }
+};
 
 async function handleGoogle(response) {
     setAS('Processing...', 'info');
     try {
-        // Decode JWT without external library
         const base64Url = response.credential.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
@@ -232,6 +255,8 @@ async function handleGoogle(response) {
         }).join(''));
 
         const { email, name, picture, sub: gid } = JSON.parse(jsonPayload);
+
+        if (!sb) throw new Error('Database not connected');
 
         const { data: existing, error: fe } = await sb.from('users_login').select('*').eq('email', email).maybeSingle();
         let user;
@@ -254,7 +279,7 @@ async function handleGoogle(response) {
             showNotification('Welcome back!', 'success');
         }, 1000);
     } catch (e) {
-        setAS(e.message, 'error');
+        setAS('Google sign-in error: ' + e.message, 'error');
     }
 }
 
@@ -275,15 +300,23 @@ function bindOtp() {
         const pass  = document.getElementById('signupPassword').value;
         if (!email || !validEmail(email)) return setAS('Enter a valid email', 'error');
         if (!pass || pass.length < 6) return setAS('Password must be at least 6 characters', 'error');
-        setAS('Sending OTP...');
+        if (!sb) return setAS('Database not connected', 'error');
+
+        setAS('Sending OTP...', 'info');
         sendBtn.disabled = true;
         try {
             currentOtp = makeOtp(); otpExpiry = Date.now() + 15 * 60000;
             signupEmail = email; signupPassword = pass;
-            await emailjs.send(EJS_SVC, EJS_TPL, {
-                email, passcode: currentOtp,
-                time: new Date(otpExpiry).toLocaleTimeString()
-            });
+
+            if (typeof emailjs !== 'undefined' && emailjs.send) {
+                await emailjs.send(EJS_SVC, EJS_TPL, {
+                    email, passcode: currentOtp,
+                    time: new Date(otpExpiry).toLocaleTimeString()
+                });
+            } else {
+                throw new Error('Email service not available');
+            }
+
             setAS('OTP sent to ' + email, 'success');
             emailBox.style.display = 'none'; otpBox.style.display = 'block';
             startTimer(resendBtn, () => { currentOtp = null; otpExpiry = 0; });
@@ -296,12 +329,12 @@ function bindOtp() {
         const entered = document.getElementById('otpInput').value.trim();
         const msg = document.getElementById('otpMsg');
         if (!currentOtp) return;
-        if (Date.now() > otpExpiry) { msg.textContent = 'OTP expired'; msg.className = 'otp-status error'; return; }
+        if (Date.now() > otpExpiry) { msg.textContent = 'OTP expired'; msg.style.color = '#9a1212'; return; }
         if (entered === currentOtp) {
-            msg.textContent = 'Verified'; msg.className = 'otp-status success';
+            msg.textContent = 'Verified!'; msg.style.color = '#1a7a3f';
             clearInterval(resendTimer);
             createUser();
-        } else { msg.textContent = 'Wrong OTP'; msg.className = 'otp-status error'; }
+        } else { msg.textContent = 'Wrong OTP'; msg.style.color = '#9a1212'; }
     });
 
     resendBtn.addEventListener('click', () => {
@@ -322,15 +355,24 @@ function bindForgot() {
     sendBtn.addEventListener('click', async () => {
         const email = document.getElementById('forgotEmail').value.trim();
         if (!email || !validEmail(email)) return setAS('Enter a valid email', 'error');
-        setAS('Sending code...', 'info'); sendBtn.disabled = true;
+        if (!sb) return setAS('Database not connected', 'error');
+
+        setAS('Sending code...', 'info');
+        sendBtn.disabled = true;
         try {
             const { data, error } = await sb.from('users_login').select('id').eq('email', email).single();
             if (error || !data) throw new Error('Email not found');
             currentOtp = makeOtp(); otpExpiry = Date.now() + 15 * 60000; resetEmail = email;
-            await emailjs.send(EJS_SVC, EJS_TPL, {
-                email, passcode: currentOtp,
-                time: new Date(otpExpiry).toLocaleTimeString()
-            });
+
+            if (typeof emailjs !== 'undefined' && emailjs.send) {
+                await emailjs.send(EJS_SVC, EJS_TPL, {
+                    email, passcode: currentOtp,
+                    time: new Date(otpExpiry).toLocaleTimeString()
+                });
+            } else {
+                throw new Error('Email service not available');
+            }
+
             setAS('Code sent to ' + email, 'success');
             document.getElementById('forgotBox').style.display = 'none';
             document.getElementById('resetBox').style.display = 'block';
@@ -344,15 +386,15 @@ function bindForgot() {
         const newPass = document.getElementById('newPass').value;
         const msg     = document.getElementById('resetMsg');
         if (!currentOtp) return;
-        if (Date.now() > otpExpiry) { msg.textContent = 'Code expired'; msg.className = 'otp-status error'; return; }
+        if (Date.now() > otpExpiry) { msg.textContent = 'Code expired'; msg.style.color = '#9a1212'; return; }
         if (code === currentOtp) {
-            msg.textContent = 'Verified. Updating...'; msg.className = 'otp-status success';
+            msg.textContent = 'Verified. Updating...'; msg.style.color = '#1a7a3f';
             clearInterval(resendTimer);
             const { error } = await sb.from('users_login').update({ password: newPass }).eq('email', resetEmail);
             if (error) { setAS(error.message, 'error'); return; }
             setAS('Password reset! You can now sign in.', 'success');
             setTimeout(() => { closeAuthModal(); openAuthModal('login'); }, 2000);
-        } else { msg.textContent = 'Wrong code'; msg.className = 'otp-status error'; }
+        } else { msg.textContent = 'Wrong code'; msg.style.color = '#9a1212'; }
     });
 
     resendBtn.addEventListener('click', () => document.getElementById('sendForgotBtn').click());
@@ -366,6 +408,8 @@ async function login() {
     const pass  = (document.getElementById('loginPassword') || {}).value || '';
     if (!email || !pass) return setAS('Please fill in all fields', 'error');
     if (!validEmail(email)) return setAS('Invalid email address', 'error');
+    if (!sb) return setAS('Database not connected. Please refresh.', 'error');
+
     setAS('Signing in...', 'info');
     try {
         const { data, error } = await sb.from('users_login').select('*').eq('email', email).eq('password', pass);
@@ -393,6 +437,7 @@ async function login() {
    CREATE USER (after OTP verified)
    ═══════════════════════════════════════════ */
 async function createUser() {
+    if (!sb) { setAS('Database not connected', 'error'); return; }
     setAS('Creating your account...', 'info');
     try {
         const { data: ex } = await sb.from('users_login').select('email').eq('email', signupEmail);
@@ -544,8 +589,11 @@ window.showNotification = showNotification;
    INIT
    ═══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', async () => {
-    // Check auth status on page load
-    await checkAuthStatus();
+    try {
+        await checkAuthStatus();
+    } catch (e) {
+        console.error('Auth status check failed:', e);
+    }
 
     // Close auth modal on outside click
     const authModal = document.getElementById('authModal');
@@ -566,15 +614,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         const ps = document.getElementById('profileSection');
         const pm = document.getElementById('profileMenu');
         if (ps && pm && !ps.contains(e.target)) pm.classList.remove('active');
-    });
-
-    // Security: disable right-click and certain keyboard shortcuts
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('keydown', e => {
-        if (e.key === 'F12' ||
-            (e.ctrlKey && e.shiftKey && ['I','J','i','j'].includes(e.key)) ||
-            (e.ctrlKey && ['u','U','s','S'].includes(e.key))) {
-            e.preventDefault();
-        }
     });
 });
