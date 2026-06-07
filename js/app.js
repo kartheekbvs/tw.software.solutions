@@ -627,4 +627,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         const pm = document.getElementById('profileMenu');
         if (ps && pm && !ps.contains(e.target)) pm.classList.remove('active');
     });
+
+    // ── FORCE VIDEO AUTOPLAY ──
+    // Browsers often block autoplay; we force-play when videos become visible
+    function forcePlayVideo(video) {
+        if (!video) return;
+        video.muted = true;
+        video.playsInline = true;
+        video.play().catch(() => {
+            // If play still fails, retry on first user interaction
+            const retry = () => {
+                video.play().catch(() => {});
+                document.removeEventListener('click', retry);
+                document.removeEventListener('touchstart', retry);
+                document.removeEventListener('scroll', retry);
+            };
+            document.addEventListener('click', retry, { once: true });
+            document.addEventListener('touchstart', retry, { once: true });
+            document.addEventListener('scroll', retry, { once: true });
+        });
+    }
+
+    // Play all videos on the page immediately
+    document.querySelectorAll('video[autoplay]').forEach(forcePlayVideo);
+
+    // Also use IntersectionObserver to play videos when they scroll into view
+    const videoObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const video = entry.target;
+            if (entry.isIntersecting) {
+                if (video.paused) forcePlayVideo(video);
+            } else {
+                // Pause when out of view to save bandwidth
+                if (!video.paused) video.pause();
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('video').forEach(video => {
+        videoObserver.observe(video);
+        // Also handle loadeddata event — sometimes video needs to load first
+        video.addEventListener('loadeddata', () => forcePlayVideo(video));
+        // Handle canplay event as well
+        video.addEventListener('canplay', () => {
+            if (video.paused) forcePlayVideo(video);
+        });
+    });
 });
