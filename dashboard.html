@@ -465,8 +465,44 @@ function logoutDashboard() {
     location.reload();
 }
 
+// ── RETRY PENDING PURCHASES ──
+async function retryPendingDashboardPurchases() {
+    if (!db) return;
+    try {
+        const pending = JSON.parse(localStorage.getItem('twss_pending_purchases') || '[]');
+        if (pending.length === 0) return;
+        console.log('Dashboard: Retrying', pending.length, 'pending purchases...');
+        const results = await Promise.allSettled(pending.map(async (entry) => {
+            if (entry.retry_count >= 5) return;
+            const { error } = await db.from('purchase').insert([{
+                email: entry.email,
+                purchased_content: entry.purchased_content,
+                payment_id: entry.payment_id,
+                amount_paid: entry.amount_paid,
+                created_at: entry.created_at
+            }]);
+            if (error) throw error;
+            return entry;
+        }));
+        results.forEach(r => {
+            if (r.status === 'fulfilled' && r.value) {
+                let remaining = JSON.parse(localStorage.getItem('twss_pending_purchases') || '[]');
+                remaining = remaining.filter(p =>
+                    !(p.email === r.value.email && p.purchased_content === r.value.purchased_content && p.payment_id === r.value.payment_id)
+                );
+                localStorage.setItem('twss_pending_purchases', JSON.stringify(remaining));
+            }
+        });
+    } catch (e) {
+        console.error('Dashboard retry pending purchases error:', e);
+    }
+}
+
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', async () => {
+    // Retry any pending purchases from localStorage first
+    await retryPendingDashboardPurchases();
+
     // Check if user is already logged in from localStorage
     const em = localStorage.getItem("userEmail");
     const loggedIn = localStorage.getItem("loggedIn");

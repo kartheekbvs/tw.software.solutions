@@ -69,6 +69,85 @@ let courseCurrentUser = null;
 let isOwnerOverride = false;
 let realtimeSubscription = null;
 
+// ── PENDING PURCHASES (localStorage fallback) ──
+function savePendingPurchases(email, items, paymentId, isOwner) {
+    try {
+        const pending = JSON.parse(localStorage.getItem('twss_pending_purchases') || '[]');
+        items.forEach(item => {
+            pending.push({
+                email: email,
+                purchased_content: item.name,
+                payment_id: paymentId,
+                amount_paid: isOwner ? 100 : item.price,
+                created_at: new Date().toISOString(),
+                retry_count: 0
+            });
+        });
+        localStorage.setItem('twss_pending_purchases', JSON.stringify(pending));
+    } catch (e) {
+        console.error('Failed to save pending purchases:', e);
+    }
+}
+
+function removePendingPurchase(entry) {
+    try {
+        let pending = JSON.parse(localStorage.getItem('twss_pending_purchases') || '[]');
+        pending = pending.filter(p =>
+            !(p.email === entry.email && p.purchased_content === entry.purchased_content && p.payment_id === entry.payment_id)
+        );
+        localStorage.setItem('twss_pending_purchases', JSON.stringify(pending));
+    } catch (e) {
+        console.error('Failed to remove pending purchase:', e);
+    }
+}
+
+async function retryPendingPurchases() {
+    if (!_sb) return;
+    try {
+        const pending = JSON.parse(localStorage.getItem('twss_pending_purchases') || '[]');
+        if (pending.length === 0) return;
+        console.log('Retrying', pending.length, 'pending purchases...');
+        const results = await Promise.allSettled(pending.map(async (entry) => {
+            if (entry.retry_count >= 5) return; // max retries
+            const { error } = await _sb.from('purchase').insert([{
+                email: entry.email,
+                purchased_content: entry.purchased_content,
+                payment_id: entry.payment_id,
+                amount_paid: entry.amount_paid,
+                created_at: entry.created_at
+            }]);
+            if (error) throw error;
+            return entry;
+        }));
+        results.forEach(r => {
+            if (r.status === 'fulfilled' && r.value) {
+                removePendingPurchase(r.value);
+            }
+        });
+    } catch (e) {
+        console.error('Retry pending purchases error:', e);
+    }
+}
+
+// ── SAVING OVERLAY ──
+function showSavingOverlay() {
+    let overlay = document.getElementById('saving-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'saving-overlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:100000;display:flex;align-items:center;justify-content:center;flex-direction:column;';
+        overlay.innerHTML = '<div style="color:#fff;font-size:1.3rem;font-family:Poppins,sans-serif;"><i class="fas fa-spinner fa-spin" style="margin-right:10px;"></i>Saving your purchase...</div><div style="color:#999;font-size:0.85rem;margin-top:10px;font-family:Poppins,sans-serif;">Please do not close this page</div>';
+        document.body.appendChild(overlay);
+    } else {
+        overlay.style.display = 'flex';
+    }
+}
+
+function hideSavingOverlay() {
+    const overlay = document.getElementById('saving-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
 // ── FILTER TABS ──
 document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -241,6 +320,28 @@ document.getElementById('checkout-form')?.addEventListener('submit', async (e) =
     let subtotal = cart.reduce((acc, item) => acc + item.price, 0);
     let finalAmount = isOwnerOverride ? 100 : Math.max(100, subtotal);
 
+    // Validate Supabase is ready before opening Razorpay
+    if (!_sb) {
+        // Try one more time to initialize
+        try {
+            if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                _sb = window.supabase.createClient(_sbUrl, _sbKey, {
+                    auth: { persistSession: true, autoRefreshToken: true },
+                    realtime: { params: { eventsPerSecond: 5 } }
+                });
+            }
+        } catch (e) {
+            console.error('Last-resort Supabase init failed:', e);
+        }
+        if (!_sb) {
+            showMessageModal("Database not connected. Please refresh the page and try again.", false);
+            return;
+        }
+    }
+
+    const cartSnapshot = [...cart]; // snapshot cart items before opening Razorpay
+    const ownerFlag = isOwnerOverride; // snapshot owner flag
+
     const options = {
         key: RAZORPAY_KEY_ID,
         amount: finalAmount,
@@ -249,38 +350,73 @@ document.getElementById('checkout-form')?.addEventListener('submit', async (e) =
         description: "Course Purchase",
         prefill: { name: name, email: email },
         theme: { color: "#080808" },
-        handler: async function(response) {
-            try {
-                const paymentId = response.razorpay_payment_id;
-                if (_sb) {
-                    for (let item of cart) {
-                        const { error } = await _sb
-                            .from('purchase')
-                            .insert([{
+        handler: function(response) {
+            // CRITICAL: Show blocking overlay IMMEDIATELY (synchronous)
+            // This prevents the user from navigating away while we save
+            showSavingOverlay();
+
+            const paymentId = response.razorpay_payment_id;
+
+            // Save to localStorage FIRST as safety net (synchronous)
+            savePendingPurchases(email, cartSnapshot, paymentId, ownerFlag);
+
+            // Now do the async DB inserts
+            (async () => {
+                try {
+                    if (_sb) {
+                        // Use Promise.all for parallel inserts (faster than sequential)
+                        const insertPromises = cartSnapshot.map(item =>
+                            _sb.from('purchase').insert([{
                                 email: email,
                                 purchased_content: item.name,
                                 payment_id: paymentId,
-                                amount_paid: isOwnerOverride ? 100 : item.price,
+                                amount_paid: ownerFlag ? 100 : item.price,
                                 created_at: new Date().toISOString()
-                            }]);
-                        if (error) throw error;
-                    }
-                } else {
-                    console.error('Supabase not initialized - cannot save purchase');
-                    showMessageModal("Database not connected. Please contact support with payment ID: " + paymentId, false);
-                    return;
-                }
+                            }])
+                        );
+                        const results = await Promise.allSettled(insertPromises);
 
-                cart = [];
-                isOwnerOverride = false;
-                updateCartUI();
-                updateCardButtons();
-                closeModal('cartModal');
-                openModal('purchaseSuccessModal');
-            } catch (error) {
-                console.error('Database error:', error);
-                showMessageModal("Payment succeeded but database update failed. Contact support with your payment ID.", false);
-            }
+                        // Check for failures
+                        const failures = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value?.error));
+                        if (failures.length > 0) {
+                            console.error('Some purchases failed to save:', failures);
+                            // Don't throw - partial success is OK, localStorage has the rest
+                        }
+
+                        // Remove successfully saved items from pending
+                        results.forEach((r, i) => {
+                            if (r.status === 'fulfilled' && !r.value?.error) {
+                                removePendingPurchase({
+                                    email: email,
+                                    purchased_content: cartSnapshot[i].name,
+                                    payment_id: paymentId
+                                });
+                            }
+                        });
+                    } else {
+                        console.error('Supabase not initialized - purchases saved in localStorage for retry');
+                        // Purchases are in localStorage, will be retried on next page load
+                    }
+
+                    cart = [];
+                    isOwnerOverride = false;
+                    updateCartUI();
+                    updateCardButtons();
+                    hideSavingOverlay();
+                    closeModal('cartModal');
+                    openModal('purchaseSuccessModal');
+                } catch (error) {
+                    console.error('Database error:', error);
+                    hideSavingOverlay();
+                    // Don't worry - localStorage has the purchases, they'll be retried
+                    cart = [];
+                    isOwnerOverride = false;
+                    updateCartUI();
+                    updateCardButtons();
+                    closeModal('cartModal');
+                    showMessageModal("Payment succeeded! Your courses are being activated. If they don't appear in the dashboard within a minute, please refresh the page or contact support with payment ID: " + paymentId, false);
+                }
+            })();
         }
     };
 
@@ -448,6 +584,9 @@ document.addEventListener('DOMContentLoaded', () => {
         courseCurrentUser = user;
     }
     initRealtime();
+
+    // Retry any pending purchases that failed to save previously
+    retryPendingPurchases();
 });
 
 })(); // end IIFE
