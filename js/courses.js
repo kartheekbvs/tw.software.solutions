@@ -1,6 +1,9 @@
 /* ═══════════════════════════════════════════
    TWSS — Courses Page Logic (Secure + Real-Time)
+   Wrapped in IIFE to avoid global scope conflicts with app.js
    ═══════════════════════════════════════════ */
+(function() {
+'use strict';
 
 // ── SECURITY: Input Sanitization (for HTML output only, NOT for DB queries) ──
 function sanitize(str) {
@@ -28,13 +31,13 @@ const rateLimiter = {
     }
 };
 
-// Supabase Init (with safety check)
-const supabaseUrl = 'https://fzwvxesrtdilljgrntpw.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d3Z4ZXNydGRpbGxqZ3JudHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NzU2NzMsImV4cCI6MjA2NjQ1MTY3M30.YnxjUtFawuumihyVGuk8e-o6iE9OkDf-MX1aKRTqA5U';
-let supabase = null;
+// Supabase Init (with safety check) — use different name to avoid any conflicts
+const _sbUrl = 'https://fzwvxesrtdilljgrntpw.supabase.co';
+const _sbKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d3Z4ZXNydGRpbGxqZ3JudHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA4NzU2NzMsImV4cCI6MjA2NjQ1MTY3M30.YnxjUtFawuumihyVGuk8e-o6iE9OkDf-MX1aKRTqA5U';
+let _sb = null;
 try {
     if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-        supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
+        _sb = window.supabase.createClient(_sbUrl, _sbKey, {
             auth: { persistSession: true, autoRefreshToken: true },
             realtime: { params: { eventsPerSecond: 5 } }
         });
@@ -62,8 +65,7 @@ const products = [
 
 const ownerCoupon = "OWNERFREE";
 let cart = [];
-// currentUser is declared in app.js — do NOT redeclare here or the entire
-// script crashes with SyntaxError: Identifier 'currentUser' has already been declared
+let courseCurrentUser = null;
 let isOwnerOverride = false;
 let realtimeSubscription = null;
 
@@ -204,7 +206,7 @@ window.applyCoupon = function() {
 // ── CHECKOUT ──
 window.showCheckoutForm = function() {
     if (cart.length === 0) return;
-    if (!currentUser) {
+    if (!courseCurrentUser) {
         closeModal('cartModal');
         openModal('authModal');
         return;
@@ -216,8 +218,8 @@ window.showCheckoutForm = function() {
 
     if (proceedBtn) proceedBtn.style.display = 'none';
     if (checkoutForm) checkoutForm.style.display = 'block';
-    if (nameInput) nameInput.value = currentUser.name || "User";
-    if (emailInput) emailInput.value = currentUser.email;
+    if (nameInput) nameInput.value = courseCurrentUser.name || "User";
+    if (emailInput) emailInput.value = courseCurrentUser.email;
 };
 
 document.getElementById('checkout-form')?.addEventListener('submit', async (e) => {
@@ -250,9 +252,9 @@ document.getElementById('checkout-form')?.addEventListener('submit', async (e) =
         handler: async function(response) {
             try {
                 const paymentId = response.razorpay_payment_id;
-                if (supabase) {
+                if (_sb) {
                     for (let item of cart) {
-                        const { error } = await supabase
+                        const { error } = await _sb
                             .from('purchase')
                             .insert([{
                                 email: email,
@@ -302,28 +304,26 @@ window.mockLogin = function() {
     // Check users_login table for authentication
     (async () => {
         try {
-            if (supabase) {
-                const { data, error } = await supabase.from('users_login').select('*').eq('email', email).maybeSingle();
+            if (_sb) {
+                const { data, error } = await _sb.from('users_login').select('*').eq('email', email).maybeSingle();
                 if (data && !error) {
-                    currentUser = { email: data.email, name: data.name || email.split('@')[0], picture: data.picture };
+                    courseCurrentUser = { email: data.email, name: data.name || email.split('@')[0], picture: data.picture };
                 } else {
-                    currentUser = { email: email, name: email.split('@')[0] };
+                    courseCurrentUser = { email: email, name: email.split('@')[0] };
                 }
             } else {
-                // Supabase not available, just use email
-                currentUser = { email: email, name: email.split('@')[0] };
+                courseCurrentUser = { email: email, name: email.split('@')[0] };
             }
             localStorage.setItem("loggedIn", "true");
             localStorage.setItem("userEmail", email);
-            localStorage.setItem('twss_user', JSON.stringify(currentUser));
+            localStorage.setItem('twss_user', JSON.stringify(courseCurrentUser));
             closeModal('authModal');
             openModal('cartModal');
             showCheckoutForm();
             if (typeof updateProfileUI === 'function') updateProfileUI();
         } catch (e) {
-            // Fallback: just use email
-            currentUser = { email: email, name: email.split('@')[0] };
-            localStorage.setItem('twss_user', JSON.stringify(currentUser));
+            courseCurrentUser = { email: email, name: email.split('@')[0] };
+            localStorage.setItem('twss_user', JSON.stringify(courseCurrentUser));
             localStorage.setItem("loggedIn", "true");
             localStorage.setItem("userEmail", email);
             closeModal('authModal');
@@ -336,12 +336,12 @@ window.mockLogin = function() {
 
 // ── REAL-TIME SUBSCRIPTION ──
 function initRealtime() {
-    if (!supabase) {
+    if (!_sb) {
         console.warn('Supabase not initialized, skipping realtime');
         return;
     }
     try {
-        realtimeSubscription = supabase
+        realtimeSubscription = _sb
             .channel('purchase-changes')
             .on('postgres_changes', {
                 event: 'INSERT',
@@ -425,9 +425,9 @@ document.addEventListener('keydown', (e) => {
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', () => {
     // Retry Supabase init if it wasn't available when script first ran
-    if (!supabase && typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+    if (!_sb && typeof window.supabase !== 'undefined' && window.supabase.createClient) {
         try {
-            supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
+            _sb = window.supabase.createClient(_sbUrl, _sbKey, {
                 auth: { persistSession: true, autoRefreshToken: true },
                 realtime: { params: { eventsPerSecond: 5 } }
             });
@@ -437,15 +437,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Check new auth system first
+    // Check existing auth from localStorage
     const loggedIn = localStorage.getItem("loggedIn");
     const userEmail = localStorage.getItem("userEmail");
     const user = JSON.parse(localStorage.getItem('twss_user') || 'null');
 
     if (loggedIn === "true" && userEmail) {
-        currentUser = user || { email: userEmail, name: userEmail.split('@')[0] };
+        courseCurrentUser = user || { email: userEmail, name: userEmail.split('@')[0] };
     } else if (user && user.email) {
-        currentUser = user;
+        courseCurrentUser = user;
     }
     initRealtime();
 });
+
+})(); // end IIFE
