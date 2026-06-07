@@ -26,7 +26,10 @@
 <!-- ═══════════════════════ HEADER ═══════════════════════ -->
 <header class="dash-header">
     <a href="index.html" class="dash-logo">TW<span>SS</span> Dashboard</a>
-    <a href="courses.html" class="dash-header-btn">Buy Courses</a>
+    <div style="display:flex;gap:10px;align-items:center;">
+        <a href="training.html" class="dash-header-btn" style="background:#333;color:#fff;border:1px solid #555;">Training</a>
+        <a href="courses.html" class="dash-header-btn">Buy Courses</a>
+    </div>
 </header>
 
 <!-- ═══════════════════════ DASHBOARD ═══════════════════════ -->
@@ -71,6 +74,9 @@
         <div class="content-header">
             <h2><i class="fas fa-book-open" style="margin-right:12px;"></i>Your Library</h2>
             <div style="display:flex;gap:10px;align-items:center;">
+                <a href="training.html" class="dash-btn-primary" style="width:auto;padding:8px 20px;text-decoration:none;font-size:0.78rem;display:inline-flex;align-items:center;gap:6px;">
+                    <i class="fas fa-graduation-cap"></i> Training
+                </a>
                 <span id="dash-user-email" style="color:#888;font-size:0.85rem;margin-right:10px;"></span>
                 <button class="dash-btn-exit" onclick="logoutDashboard()">
                     <i class="fas fa-sign-out-alt"></i> Exit

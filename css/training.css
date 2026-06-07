@@ -1,0 +1,814 @@
+/* ═══════════════════════════════════════════
+   TWSS Training Module — Dark Theme
+   Matches dashboard.css design system
+   ═══════════════════════════════════════════ */
+
+:root {
+    --bg-dark: #000000;
+    --surface: #111111;
+    --surface-2: #1a1a1a;
+    --surface-3: #222222;
+    --border-color: #333333;
+    --border-hover: #555555;
+    --text-main: #ffffff;
+    --text-muted: #888888;
+    --text-dim: #555555;
+    --accent: #ffffff;
+    --success: #4caf50;
+    --danger: #f44336;
+    --warning: #ff9800;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    min-height: 100vh;
+}
+
+/* ── HEADER ── */
+.train-header {
+    padding: 20px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    background: #000;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.train-logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+}
+
+.train-logo span {
+    color: #888;
+}
+
+.train-header-btn {
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 8px 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: 0.3s;
+    letter-spacing: 0.05em;
+}
+
+.train-header-btn:hover {
+    background: #ccc;
+}
+
+/* ── CONTAINER ── */
+.train-container {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+/* ── LOGIN BOX ── */
+.train-login-box {
+    background: var(--surface);
+    padding: 50px 40px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    max-width: 500px;
+    margin: 60px auto;
+    border-radius: 2px;
+}
+
+.train-login-icon {
+    width: 64px;
+    height: 64px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #fff;
+    margin: 0 auto 24px;
+}
+
+.train-login-box h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #fff;
+}
+
+.train-login-box input {
+    width: 100%;
+    padding: 12px 16px;
+    margin: 10px 0;
+    background: #000;
+    border: 1px solid #333;
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.train-login-box input:focus {
+    border-color: #fff;
+}
+
+.train-login-box input::placeholder {
+    color: #555;
+}
+
+/* ── BUTTONS ── */
+.train-btn-primary {
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 12px 30px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: 0.05em;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.train-btn-primary:hover {
+    background: #ccc;
+}
+
+.train-btn-secondary {
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 12px 30px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: 0.05em;
+    width: 100%;
+}
+
+.train-btn-secondary:hover {
+    background: #444;
+    border-color: #777;
+}
+
+.train-btn-exit {
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 8px 20px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.train-btn-exit:hover {
+    background: #444;
+    border-color: #777;
+}
+
+/* ── EMPTY STATE ── */
+.train-empty {
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.train-empty-icon {
+    font-size: 3rem;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.train-empty h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #fff;
+}
+
+.train-empty p {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 28px;
+    line-height: 1.7;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ── DASHBOARD ── */
+.train-dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.train-dash-title h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.train-dash-title p {
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.train-dash-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ── OVERVIEW STATS ── */
+.train-overview-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+}
+
+.train-stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    padding: 24px 20px;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.train-stat-box:hover {
+    border-color: #fff;
+    transform: translateY(-3px);
+}
+
+.train-stat-num {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.train-stat-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #888;
+}
+
+/* ── COURSE CARDS ── */
+.train-courses-list {
+    display: grid;
+    gap: 24px;
+}
+
+.train-course-card {
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    padding: 28px;
+    transition: 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.train-course-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #fff, #888);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+}
+
+.train-course-card:hover::before {
+    transform: scaleX(1);
+}
+
+.train-course-card:hover {
+    border-color: #fff;
+    transform: translateY(-3px);
+}
+
+.train-course-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.train-course-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #fff;
+    transition: 0.3s;
+    flex-shrink: 0;
+}
+
+.train-course-card:hover .train-course-icon {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+}
+
+.train-course-info {
+    flex: 1;
+}
+
+.train-course-info h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #fff;
+}
+
+.train-course-info p {
+    color: #888;
+    font-size: 0.82rem;
+}
+
+.train-course-pct {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* ── PROGRESS BAR ── */
+.train-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: var(--surface-2);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.train-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #fff, #888);
+    transition: width 0.6s ease;
+}
+
+/* ── WEEKS GRID ── */
+.train-weeks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    gap: 8px;
+}
+
+.week-card {
+    padding: 12px 8px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: 0.3s;
+    position: relative;
+}
+
+.week-card:hover {
+    border-color: #fff;
+    transform: translateY(-2px);
+}
+
+.week-num {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.week-status {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+/* Week states */
+.week-locked {
+    background: var(--surface-2);
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+.week-locked .week-status { color: #555; }
+
+.week-available {
+    background: var(--surface-2);
+    border-color: var(--border-color);
+}
+.week-available .week-status { color: #fff; }
+.week-available:hover { background: #2a2a2a; }
+
+.week-progress {
+    background: var(--surface-2);
+    border-color: var(--warning);
+}
+.week-progress .week-status { color: var(--warning); }
+
+.week-complete {
+    background: rgba(76, 175, 80, 0.1);
+    border-color: var(--success);
+}
+.week-complete .week-status { color: var(--success); }
+
+.week-exam {
+    background: rgba(66, 133, 244, 0.1);
+    border-color: #4285f4;
+}
+.week-exam .week-status { color: #4285f4; }
+
+/* ── QUIZ CONTAINER ── */
+.quiz-container {
+    max-width: 700px;
+    margin: 40px auto;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    padding: 40px;
+}
+
+.quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.quiz-course-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #888;
+}
+
+.quiz-progress-text {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.quiz-progress-bar {
+    width: 100%;
+    height: 3px;
+    background: var(--surface-2);
+    margin-bottom: 32px;
+    overflow: hidden;
+}
+
+.quiz-progress-fill {
+    height: 100%;
+    background: #fff;
+    transition: width 0.3s ease;
+}
+
+.quiz-question {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 28px;
+    line-height: 1.5;
+    color: #fff;
+}
+
+/* ── QUIZ OPTIONS ── */
+.quiz-options {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 32px;
+}
+
+.quiz-opt {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.quiz-opt:hover {
+    border-color: #fff;
+    background: #222;
+}
+
+.quiz-opt-selected {
+    border-color: #fff;
+    background: #2a2a2a;
+}
+
+.quiz-opt-selected .quiz-opt-marker {
+    background: #fff;
+    color: #000;
+}
+
+.quiz-opt-marker {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    background: var(--surface-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    transition: 0.3s;
+}
+
+.quiz-opt-text {
+    font-size: 0.92rem;
+    color: #ddd;
+    line-height: 1.5;
+}
+
+/* ── QUIZ NAVIGATION ── */
+.quiz-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.quiz-nav-btn {
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 12px 24px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.05em;
+}
+
+.quiz-nav-btn:hover {
+    background: #444;
+    border-color: #777;
+}
+
+.quiz-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.quiz-nav-next {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+}
+
+.quiz-nav-next:hover {
+    background: #ccc;
+}
+
+.quiz-submit-btn {
+    background: var(--success);
+    color: #fff;
+    border-color: var(--success);
+}
+
+.quiz-submit-btn:hover {
+    background: #388e3c;
+    border-color: #388e3c;
+}
+
+/* ── QUIZ RESULTS ── */
+.quiz-result {
+    max-width: 700px;
+    margin: 40px auto;
+}
+
+.quiz-result-header {
+    text-align: center;
+    padding: 40px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border-color);
+    background: var(--surface);
+}
+
+.quiz-passed {
+    border-color: var(--success);
+}
+
+.quiz-failed {
+    border-color: var(--danger);
+}
+
+.quiz-result-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+}
+
+.quiz-passed .quiz-result-icon { color: var(--success); }
+.quiz-failed .quiz-result-icon { color: var(--danger); }
+
+.quiz-result-header h2 {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    color: #fff;
+}
+
+.quiz-result-score {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 12px 0;
+}
+
+.quiz-result-header p {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+/* ── RESULT ITEMS ── */
+.quiz-results-list {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.result-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+}
+
+.result-correct {
+    border-left: 3px solid var(--success);
+}
+
+.result-wrong {
+    border-left: 3px solid var(--danger);
+}
+
+.result-marker {
+    font-size: 0.9rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.result-correct .result-marker { color: var(--success); }
+.result-wrong .result-marker { color: var(--danger); }
+
+.result-content {
+    flex: 1;
+}
+
+.result-q {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+    line-height: 1.5;
+}
+
+.result-ans {
+    font-size: 0.82rem;
+    color: #888;
+}
+
+.result-correct-ans {
+    font-size: 0.82rem;
+    color: var(--success);
+    margin-top: 2px;
+}
+
+.quiz-result-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* ── FOOTER ── */
+.train-footer {
+    padding: 24px 50px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #666;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: #000;
+}
+
+.train-footer a {
+    color: #888;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.train-footer a:hover {
+    color: #fff;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+    .train-header {
+        padding: 16px 20px;
+    }
+
+    .train-dash-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .train-overview-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .train-weeks-grid {
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    }
+
+    .quiz-container {
+        padding: 24px;
+        margin: 20px auto;
+    }
+
+    .quiz-result-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .train-footer {
+        padding: 20px;
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .train-login-box {
+        padding: 30px 20px;
+    }
+
+    .train-overview-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .train-course-header {
+        flex-wrap: wrap;
+    }
+
+    .train-course-pct {
+        font-size: 1.2rem;
+    }
+}
