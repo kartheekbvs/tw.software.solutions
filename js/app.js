@@ -611,14 +611,20 @@ window.toggleMobileMenu = toggleMobileMenu;
 /* ═══════════════════════════════════════════
    CHECK AUTH — Redirect only if logged in
    ═══════════════════════════════════════════ */
+// TEMP: Auth bypass for Google AdSense crawler review
+// After approval, restore the original checkAuth (see comment below)
 function checkAuth(route) {
-    if (!isAuthenticated) {
-        showNotification('Please sign in to access this feature', 'warning');
-        setTimeout(function() { openAuthModal('login'); }, 900);
-        return false;
-    }
-    showNotification('Loading...', 'info');
-    setTimeout(function() { window.location.href = route; }, 800);
+    // Original (restore after AdSense approval):
+    // if (!isAuthenticated) {
+    //     showNotification('Please sign in to access this feature', 'warning');
+    //     setTimeout(function() { openAuthModal('login'); }, 900);
+    //     return false;
+    // }
+    // showNotification('Loading...', 'info');
+    // setTimeout(function() { window.location.href = route; }, 800);
+
+    // TEMP: Allow all navigation without login
+    window.location.href = route;
 }
 
 /* ═══════════════════════════════════════════

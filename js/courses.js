@@ -457,11 +457,14 @@ window.applyCoupon = function() {
 // ═══════════════════════════════════════════════════════
 window.showCheckoutForm = function() {
     if (cart.length === 0) return;
-    if (!courseCurrentUser) {
-        closeModal('cartModal');
-        openModal('authModal');
-        return;
-    }
+    // TEMP: Auth bypass for Google AdSense crawler review
+    // Original (restore after approval):
+    // if (!courseCurrentUser) {
+    //     closeModal('cartModal');
+    //     openModal('authModal');
+    //     return;
+    // }
+    // TEMP: If not logged in, just let them see the checkout form (they'll need to enter email)
     const proceedBtn = document.getElementById('proceed-to-checkout');
     const checkoutForm = document.getElementById('checkout-form');
     const nameInput = document.getElementById('checkout-name');

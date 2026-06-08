@@ -376,15 +376,26 @@
 
     // ── MAIN INIT ──
     async function initTraining() {
-        // Check if user is logged in
+        // TEMP: Auth bypass for Google AdSense crawler review
+        // Original (restore after approval):
+        // const em = localStorage.getItem('userEmail');
+        // const loggedIn = localStorage.getItem('loggedIn');
+        // if (loggedIn === 'true' && em) {
+        //     trainEmail = em;
+        //     await loadPurchasesAndRender();
+        // } else {
+        //     renderLoginForm();
+        // }
+
+        // TEMP: Always show dashboard (with empty state if not logged in)
         const em = localStorage.getItem('userEmail');
         const loggedIn = localStorage.getItem('loggedIn');
-
         if (loggedIn === 'true' && em) {
             trainEmail = em;
             await loadPurchasesAndRender();
         } else {
-            renderLoginForm();
+            // Show dashboard with empty state instead of login form
+            renderDashboard([]);
         }
     }
 
