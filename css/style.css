@@ -843,6 +843,28 @@ body::after {
     .hero h1 { font-size:clamp(2.5rem, 8vw, 4rem); }
 }
 
+/* ── ADSENSE PROTECTION: no ads in modals, menus, auth, checkout ── */
+[data-ad="none"] .adsbygoogle,
+[data-ad="none"] .google-auto-placed,
+[data-ad="none"] ins.adsbygoogle,
+[data-ad="none"] iframe[src*="google"],
+[data-ad="none"] iframe[src*="doubleclick"],
+.modal .adsbygoogle,
+.modal .google-auto-placed,
+.auth-modal .adsbygoogle,
+.auth-modal .google-auto-placed,
+.mobile-nav .adsbygoogle,
+.mobile-nav .google-auto-placed,
+.header .adsbygoogle,
+.header .google-auto-placed,
+footer .adsbygoogle,
+footer .google-auto-placed {
+    display: none !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+}
+
 /* ── ANIMATIONS ── */
 @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
 @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
