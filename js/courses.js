@@ -471,8 +471,8 @@ window.showCheckoutForm = function() {
     const emailInput = document.getElementById('checkout-email');
     if (proceedBtn) proceedBtn.style.display = 'none';
     if (checkoutForm) checkoutForm.style.display = 'block';
-    if (nameInput) nameInput.value = courseCurrentUser.name || "User";
-    if (emailInput) emailInput.value = courseCurrentUser.email;
+    if (nameInput) nameInput.value = (courseCurrentUser && courseCurrentUser.name) || "User";
+    if (emailInput) emailInput.value = (courseCurrentUser && courseCurrentUser.email) || "";
 };
 
 document.getElementById('checkout-form')?.addEventListener('submit', async (e) => {
