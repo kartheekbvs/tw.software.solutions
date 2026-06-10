@@ -468,10 +468,16 @@
             app.innerHTML = `
                 <div class="train-empty">
                     <div class="train-empty-icon"><i class="fas fa-book-open"></i></div>
-                    <h2>No Courses Found</h2>
-                    <p>You haven't purchased any courses yet. Buy courses to unlock training content and weekly quizzes.</p>
+                    <h2>Start Your Training Journey</h2>
+                    <p style="max-width:600px;margin:0 auto 16px;line-height:1.7;">You haven't purchased any courses yet. Our training modules are designed to reinforce your learning through structured weekly quizzes. Each course includes multiple weeks of curated questions covering everything from programming fundamentals to advanced concepts. Purchase a course to unlock its full training program, including progress tracking and quiz retakes.</p>
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:20px;">
+                        <div style="background:#1a1a2e;border:1px solid #2a2a3e;border-radius:8px;padding:10px 16px;font-size:0.82rem;color:#ccc;"><i class="fas fa-check-circle" style="color:#ffd700;margin-right:6px;"></i>5 Question Quizzes</div>
+                        <div style="background:#1a1a2e;border:1px solid #2a2a3e;border-radius:8px;padding:10px 16px;font-size:0.82rem;color:#ccc;"><i class="fas fa-check-circle" style="color:#ffd700;margin-right:6px;"></i>80% Pass Rate</div>
+                        <div style="background:#1a1a2e;border:1px solid #2a2a3e;border-radius:8px;padding:10px 16px;font-size:0.82rem;color:#ccc;"><i class="fas fa-check-circle" style="color:#ffd700;margin-right:6px;"></i>Unlimited Retakes</div>
+                        <div style="background:#1a1a2e;border:1px solid #2a2a3e;border-radius:8px;padding:10px 16px;font-size:0.82rem;color:#ccc;"><i class="fas fa-check-circle" style="color:#ffd700;margin-right:6px;"></i>Progress Tracking</div>
+                    </div>
                     <a href="courses.html" class="train-btn-primary" style="display:inline-flex;padding:14px 36px;text-decoration:none;">
-                        <i class="fas fa-arrow-right"></i> Browse Courses
+                        <i class="fas fa-arrow-right"></i> Browse Courses to Get Started
                     </a>
                 </div>
             `;
