@@ -3,7 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exam Portal - Test Your Skills</title>
+    <title>Exam Portal | TWSS - Test Your Technical Skills</title>
+    <meta name="description" content="Test your programming and technical skills with TWSS Exam Portal. Professional exams in C, C++, Java, Python, SQL, DBMS, and more with verified certifications.">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="google-adsense-account" content="ca-pub-6380673568600014">
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6380673568600014" crossorigin="anonymous"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="https://admin.speedexam.net/logo/dc3e4eab-a58d-4730-91c3-9ec209773c04.png">
+
     <style>
         * {
             margin: 0;
@@ -12,7 +26,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Poppins', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: #333;
@@ -258,12 +272,53 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Publisher content section for AdSense */
+        .exam-info-section {
+            max-width: 1200px;
+            margin: 0 auto 30px;
+            padding: 0 20px;
+        }
+        .exam-info-section h2 {
+            color: #fff;
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+        }
+        .exam-info-section p {
+            color: rgba(255,255,255,0.85);
+            line-height: 1.8;
+            max-width: 800px;
+            margin-bottom: 14px;
+        }
+
+        /* Footer */
+        .exam-footer {
+            text-align: center;
+            padding: 24px 20px;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.85rem;
+        }
+        .exam-footer a {
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+        }
+        .exam-footer a:hover {
+            color: #fff;
+        }
     </style>
 </head>
 <body>
+
+    <!-- Publisher content section for AdSense compliance -->
+    <section class="exam-info-section" style="padding-top:20px;">
+        <h2><i class="fas fa-graduation-cap" style="margin-right:10px;"></i>TWSS Exam Portal</h2>
+        <p>The TWSS Exam Portal allows students and professionals to validate their programming skills through professionally designed examinations. Our exams are powered by SpeedExam and cover twelve technology domains, providing verified proof of competency that you can showcase on your resume and professional profiles.</p>
+        <p>Each exam tests both theoretical knowledge and practical understanding, covering topics from basic syntax and data types to advanced concepts like memory management, multithreading, and database optimization. Select your course below, enter your details, and start your exam to receive detailed performance feedback and certification.</p>
+    </section>
+
     <div class="container">
         <div class="header">
-            <h1>🎓 Exam Portal</h1>
+            <h1><i class="fas fa-award"></i> Exam Portal</h1>
             <p>Test your programming and technical skills with our comprehensive exams</p>
         </div>
 
@@ -303,7 +358,7 @@
                     <div class="success-message" id="successMessage"></div>
 
                     <button type="submit" class="start-btn" id="startBtn">
-                        🚀 Start Exam
+                        <i class="fas fa-rocket"></i> Start Exam
                     </button>
                 </form>
 
@@ -314,7 +369,7 @@
             </div>
 
             <div class="courses-showcase">
-                <h2>📚 Available Courses</h2>
+                <h2><i class="fas fa-book-open"></i> Available Courses</h2>
                 
                 <div class="course-card" data-course="c">
                     <h3>C Programming</h3>
@@ -364,6 +419,44 @@
         </div>
     </div>
 
+    <footer class="exam-footer">
+        <span>&copy; 2026 TWSS Initiative. All Rights Reserved.</span>
+        <span style="margin-left:16px;"><a href="privacy.html">Privacy Policy</a> | Developed by <a href="https://twss.netlify.app/portfolio" target="_blank" style="font-weight:700;">KARTHEEK</a></span>
+    </footer>
+
+    <script>
+        // Cookie Consent (same as app.js, for pages that don't load app.js)
+        (function() {
+            var CONSENT_KEY = 'twss_cookie_consent';
+            var consent = localStorage.getItem(CONSENT_KEY);
+            if (!consent) {
+                try { (window.adsbygoogle = window.adsbygoogle || []).requestNonPersonalizedAds = 1; } catch(e) {}
+            }
+            if (!consent) {
+                document.addEventListener('DOMContentLoaded', function() {
+                    if (document.getElementById('cookie-consent-banner')) return;
+                    var banner = document.createElement('div');
+                    banner.id = 'cookie-consent-banner';
+                    banner.style.cssText = 'position:fixed;bottom:0;left:0;width:100%;background:#111;color:#fff;padding:18px 24px;z-index:999999;display:flex;align-items:center;justify-content:center;gap:16px;font-family:Poppins,sans-serif;font-size:0.88rem;box-shadow:0 -2px 20px rgba(0,0,0,0.6);flex-wrap:wrap;';
+                    banner.innerHTML = '<span style="flex:1;min-width:260px;">We use cookies for analytics and advertising (Google AdSense). You can accept or reject non-essential cookies. <a href="privacy.html" style="color:#ffd700;text-decoration:underline;">Privacy Policy</a></span>' +
+                        '<button id="cookie-accept" style="padding:10px 24px;background:#ffd700;color:#000;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:0.85rem;">Accept All Cookies</button>' +
+                        '<button id="cookie-reject" style="padding:10px 18px;background:transparent;color:#aaa;border:1px solid #555;border-radius:6px;cursor:pointer;font-size:0.82rem;">Reject Non-Essential</button>';
+                    document.body.appendChild(banner);
+                    document.getElementById('cookie-accept').addEventListener('click', function() {
+                        localStorage.setItem(CONSENT_KEY, 'accepted');
+                        banner.remove();
+                        try { (window.adsbygoogle = window.adsbygoogle || []).requestNonPersonalizedAds = 0; (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
+                    });
+                    document.getElementById('cookie-reject').addEventListener('click', function() {
+                        localStorage.setItem(CONSENT_KEY, 'rejected');
+                        banner.remove();
+                        try { (window.adsbygoogle = window.adsbygoogle || []).requestNonPersonalizedAds = 1; } catch(e) {}
+                    });
+                });
+            }
+        })();
+    </script>
+
     <script>
         // Course URLs mapping
         const courseUrls = {
@@ -394,32 +487,21 @@
             const courseButtons = document.querySelectorAll('.course-btn');
             const courseCards = document.querySelectorAll('.course-card');
 
-            // Course button selection
             courseButtons.forEach(button => {
                 button.addEventListener('click', function() {
-                    // Remove selection from all buttons
                     courseButtons.forEach(btn => btn.classList.remove('selected'));
-                    
-                    // Add selection to clicked button
                     this.classList.add('selected');
                     selectedCourse = this.dataset.course;
-                    
-                    // Update start button state
                     updateStartButton();
-                    
-                    // Clear any error messages
                     hideMessage('errorMessage');
                 });
             });
 
-            // Course card clicks
             courseCards.forEach(card => {
                 card.addEventListener('click', function() {
                     const course = this.dataset.course;
                     const button = document.querySelector(`[data-course="${course}"]`);
-                    if (button) {
-                        button.click();
-                    }
+                    if (button) button.click();
                 });
             });
         }
@@ -433,7 +515,6 @@
                 startExam();
             });
 
-            // Real-time validation
             nameInput.addEventListener('input', updateStartButton);
         }
 
@@ -445,9 +526,9 @@
             startBtn.disabled = !isValid;
             
             if (isValid) {
-                startBtn.textContent = `🚀 Start ${selectedCourse.toUpperCase()} Exam`;
+                startBtn.innerHTML = '<i class="fas fa-rocket"></i> Start ' + selectedCourse.toUpperCase() + ' Exam';
             } else {
-                startBtn.textContent = '🚀 Start Exam';
+                startBtn.innerHTML = '<i class="fas fa-rocket"></i> Start Exam';
             }
         }
 
@@ -458,7 +539,6 @@
             const studentName = nameInput.value.trim();
             const studentEmail = emailInput.value.trim();
 
-            // Validation
             if (!studentName) {
                 showMessage('errorMessage', 'Please enter your name');
                 return;
@@ -469,18 +549,14 @@
                 return;
             }
 
-            // Email validation (if provided)
             if (studentEmail && !isValidEmail(studentEmail)) {
                 showMessage('errorMessage', 'Please enter a valid email address');
                 return;
             }
 
-            // Show loading
             showLoading();
 
-            // Simulate preparation time
             setTimeout(() => {
-                // Store student info (in a real app, this would go to a server)
                 const studentInfo = {
                     name: studentName,
                     email: studentEmail,
@@ -488,17 +564,14 @@
                     timestamp: new Date().toISOString()
                 };
 
-                // Store in memory for this session
                 window.currentStudent = studentInfo;
 
-                showMessage('successMessage', `Good luck with your ${selectedCourse.toUpperCase()} exam, ${studentName}!`);
+                showMessage('successMessage', 'Good luck with your ' + selectedCourse.toUpperCase() + ' exam, ' + studentName + '!');
                 
-                // Redirect to exam
                 setTimeout(() => {
                     if (courseUrls[selectedCourse]) {
                         window.open(courseUrls[selectedCourse], '_blank');
                     } else {
-                        // Fallback - show coming soon message
                         showMessage('errorMessage', 'This exam is coming soon! Please try another course.');
                     }
                     hideLoading();
@@ -521,7 +594,6 @@
             element.textContent = message;
             element.style.display = 'block';
             
-            // Hide other message types
             const otherMessage = elementId === 'errorMessage' ? 'successMessage' : 'errorMessage';
             document.getElementById(otherMessage).style.display = 'none';
         }
@@ -536,7 +608,6 @@
         }
 
         function addHoverEffects() {
-            // Add smooth scrolling and animations
             const cards = document.querySelectorAll('.course-card');
             cards.forEach(card => {
                 card.addEventListener('mouseenter', function() {
@@ -549,8 +620,8 @@
             });
         }
 
-        // Add some dynamic stats (simulated)
-        function updateStats() {
+        // Start stats animation after page load
+        setTimeout(function updateStats() {
             const stats = [
                 { element: document.querySelector('.stat-card h3'), value: 12 },
                 { element: document.querySelectorAll('.stat-card h3')[1], value: 500 },
@@ -566,13 +637,10 @@
                         current = stat.value;
                         clearInterval(timer);
                     }
-                    stat.element.textContent = Math.floor(current) + (index === 0 ? '+' : '+');
+                    stat.element.textContent = Math.floor(current) + '+';
                 }, 20);
             });
-        }
-
-        // Start stats animation after page load
-        setTimeout(updateStats, 500);
+        }, 500);
     </script>
 </body>
 </html>

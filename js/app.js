@@ -3,6 +3,55 @@
    Full Auth: Google OAuth, Email/Password, OTP, Forgot Password
    ═══════════════════════════════════════════ */
 
+// ── COOKIE CONSENT (AdSense / EU User Consent Policy) ──
+(function() {
+    var CONSENT_KEY = 'twss_cookie_consent';
+    var consent = localStorage.getItem(CONSENT_KEY);
+
+    // If user has not consented, request non-personalized ads
+    if (!consent) {
+        try {
+            (window.adsbygoogle = window.adsbygoogle || []).requestNonPersonalizedAds = 1;
+        } catch(e) {}
+    }
+
+    // Show consent banner if not yet decided
+    if (!consent) {
+        document.addEventListener('DOMContentLoaded', function() {
+            // Don't double-create
+            if (document.getElementById('cookie-consent-banner')) return;
+
+            var banner = document.createElement('div');
+            banner.id = 'cookie-consent-banner';
+            banner.style.cssText = 'position:fixed;bottom:0;left:0;width:100%;background:#111;color:#fff;padding:18px 24px;z-index:999999;display:flex;align-items:center;justify-content:center;gap:16px;font-family:"Plus Jakarta Sans",sans-serif;font-size:0.88rem;box-shadow:0 -2px 20px rgba(0,0,0,0.6);flex-wrap:wrap;';
+            banner.innerHTML = '<span style="flex:1;min-width:260px;">We use cookies for analytics and advertising (Google AdSense). You can accept or reject non-essential cookies. <a href="privacy.html" style="color:#ffd700;text-decoration:underline;">Privacy Policy</a></span>' +
+                '<button id="cookie-accept" style="padding:10px 24px;background:#ffd700;color:#000;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:0.85rem;">Accept All Cookies</button>' +
+                '<button id="cookie-reject" style="padding:10px 18px;background:transparent;color:#aaa;border:1px solid #555;border-radius:6px;cursor:pointer;font-size:0.82rem;">Reject Non-Essential</button>';
+            document.body.appendChild(banner);
+
+            document.getElementById('cookie-accept').addEventListener('click', function() {
+                localStorage.setItem(CONSENT_KEY, 'accepted');
+                banner.remove();
+                // Enable personalized ads
+                try {
+                    (window.adsbygoogle = window.adsbygoogle || []).requestNonPersonalizedAds = 0;
+                    // Push a new ad request to refresh with personalized ads
+                    (window.adsbygoogle = window.adsbygoogle || []).push({});
+                } catch(e) {}
+            });
+
+            document.getElementById('cookie-reject').addEventListener('click', function() {
+                localStorage.setItem(CONSENT_KEY, 'rejected');
+                banner.remove();
+                // Keep non-personalized ads
+                try {
+                    (window.adsbygoogle = window.adsbygoogle || []).requestNonPersonalizedAds = 1;
+                } catch(e) {}
+            });
+        });
+    }
+})();
+
 // ── CUSTOM CURSOR ──
 (function() {
     const dot = document.getElementById('cur-dot');
